@@ -10,17 +10,16 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-
 
 
 public class MainActivity extends AppCompatActivity {
 
     private BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning;
-    private Handler mHandler;
-    private BluetoothDevice weatherDevice;
+    private Handler mHandler = new Handler();
     private ArrayAdapter<String> mNewDevicesArrayAdapter;
     private static final long SCAN_PERIOD = 10000;
     private static final int REQUEST_ENABLE_BT = 1; // is this correct?
@@ -83,24 +82,19 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void scanDevices(final boolean enable) {
-        if (enable) {
-            // Stops scanning after a pre-defined scan period.
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mScanning = false;
-                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
-                }
-            }, SCAN_PERIOD);
+    public void scanDevices(View view) {
+        // Stops scanning after a pre-defined scan period.
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mScanning = false;
+                mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            }
+        }, SCAN_PERIOD);
 
-            mScanning = true;
+        mScanning = true;
 //            mBluetoothAdapter.startLeScan(new UUID[] {UUID.fromString("00000002-0000-0000-fdfd-fdfdfdfdfdfd")}, mLeScanCallback);
-            mBluetoothAdapter.startLeScan(mLeScanCallback);
-        } else {
-            mScanning = false;
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-        }
+        mBluetoothAdapter.startLeScan(mLeScanCallback);
     }
 
 }
