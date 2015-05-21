@@ -20,7 +20,8 @@ BLUETOOTH_ADMIN permission. Note: If you use the BLUETOOTH_ADMIN permission, the
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme"
+        android:debuggable="true" >
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name" >
