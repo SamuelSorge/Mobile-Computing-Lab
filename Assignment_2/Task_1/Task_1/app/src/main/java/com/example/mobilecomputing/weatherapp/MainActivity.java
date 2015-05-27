@@ -27,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<BluetoothDevice> devices = new ArrayList<>();
     private static final long SCAN_PERIOD = 10000;
     private static final int REQUEST_ENABLE_BT = 1; // is this correct?
+    private float tempMeasurement = 0f;
+    private int humidMeasurement = 0;
 
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
             new BluetoothAdapter.LeScanCallback() {
@@ -120,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
         targetDevice.connectGatt(this, true, new BluetoothGattCallback() {
 
             private BluetoothGattCharacteristic temperatureCharacteristic;
+            private BluetoothGattCharacteristic humidCharacteristic;
             private BluetoothGatt gatt;
 
             @Override
@@ -131,6 +134,14 @@ public class MainActivity extends AppCompatActivity {
                     System.out.println("Connected to device.");
                     // discover services -> calls onServicesDiscovered if successful
                     System.out.println("Started service discovery: " + gatt.discoverServices());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            findViewById(R.id.connectedTo).setVisibility(View.VISIBLE);
+                            findViewById(R.id.showTempButton).setVisibility(View.VISIBLE);
+                            findViewById(R.id.showHumidButton).setVisibility(View.VISIBLE);
+                        }
+                    });
                 } else if (BluetoothProfile.STATE_DISCONNECTED == newState) {
                     this.gatt = null;
                     System.out.println("Disconnected to device.");
@@ -144,7 +155,11 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(services.size() + " services available.");
                 BluetoothGattService weatherService = gatt.getService(UUID.fromString("00000002-0000-0000-fdfd-fdfdfdfdfdfd"));
                 temperatureCharacteristic = weatherService.getCharacteristics().get(0);
+                System.out.println("Using temp. char.: "+temperatureCharacteristic.getUuid().toString());
                 this.gatt.readCharacteristic(temperatureCharacteristic);
+                humidCharacteristic = weatherService.getCharacteristics().get(1);
+                System.out.println("Using humid. char.: "+humidCharacteristic.getUuid().toString());
+                this.gatt.readCharacteristic(humidCharacteristic);
                 //this.gatt.disconnect();
             }
 
@@ -152,7 +167,9 @@ public class MainActivity extends AppCompatActivity {
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 if (null != this.gatt) {
                     if (characteristic == temperatureCharacteristic) {
-                        readTempMeasurement(characteristic);
+                        tempMeasurement = readTempMeasurement(characteristic);
+                    } else if (characteristic == humidCharacteristic) {
+                        humidMeasurement = readHumidMeasurement(characteristic);
                     }
                 }
             }
@@ -173,19 +190,30 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
-    private void readTempMeasurement(BluetoothGattCharacteristic characteristic) {
+    private float readTempMeasurement(BluetoothGattCharacteristic characteristic) {
         if (UUID.fromString("00002a1c-0000-1000-8000-00805f9b34fb").equals(characteristic.getUuid())) {
-            final float temp = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT, 1);
-            System.out.println("temp: "+temp);
+            return characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT, 1);
         }
+        return -1;
+    }
+
+    private int readHumidMeasurement(BluetoothGattCharacteristic characteristic) {
+        if (UUID.fromString("00002a6f-0000-1000-8000-00805f9b34fb").equals(characteristic.getUuid())) {
+            return characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 1);
+        }
+        return -1;
     }
 
     public void showTemp(View view) {
-
+        TextView tempField = (TextView) findViewById(R.id.tempField);
+        tempField.setText("" + tempMeasurement);
+        tempField.setVisibility(View.VISIBLE);
     }
 
     public void showHumid(View view) {
-
+        TextView humidField = (TextView) findViewById(R.id.humidField);
+        humidField.setText("" + humidMeasurement);
+        humidField.setVisibility(View.VISIBLE);
     }
 
 }

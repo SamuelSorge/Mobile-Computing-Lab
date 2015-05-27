@@ -12,4 +12,17 @@
 
     <ListView android:id="@+id/deviceList" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_below="@id/scanEnv"/>
 
+    <!-- these controls are shown after successful connection to Weather App -->
+    <TextView android:id="@+id/connectedTo" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="@string/connected_to" android:visibility="invisible" android:layout_below="@id/deviceList"/>
+    <Button android:id="@+id/showTempButton" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/show_temp" android:visibility="invisible" android:onClick="showTemp" android:layout_below="@id/connectedTo"/>
+    <TextView android:id="@+id/tempField" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:visibility="invisible" android:layout_below="@id/showTempButton"/>
+    <Button android:id="@+id/showHumidButton" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/show_humid" android:visibility="invisible" android:onClick="showHumid" android:layout_below="@id/tempField"/>
+    <TextView android:id="@+id/humidField" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:visibility="invisible" android:layout_below="@id/showHumidButton"/>
+
+
 </RelativeLayout>
