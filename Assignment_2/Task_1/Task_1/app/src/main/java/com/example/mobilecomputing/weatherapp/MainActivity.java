@@ -13,8 +13,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -104,6 +102,11 @@ public class MainActivity extends AppCompatActivity {
         mBluetoothAdapter.startLeScan(mLeScanCallback);
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
     public void connect(View view) {
         // Get the device MAC address, which is the last 17 chars in the View
         String info = ((TextView) view).getText().toString();
@@ -116,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         // connect to target device by connecting to gatt server (expecting callback)
         targetDevice.connectGatt(this, true, new BluetoothGattCallback() {
 
-            private BluetoothGattCharacteristic temperature;
+            private BluetoothGattCharacteristic temperatureCharacteristic;
             private BluetoothGatt gatt;
 
             @Override
@@ -140,16 +143,16 @@ public class MainActivity extends AppCompatActivity {
                 List<BluetoothGattService> services = gatt.getServices();
                 System.out.println(services.size() + " services available.");
                 BluetoothGattService weatherService = gatt.getService(UUID.fromString("00000002-0000-0000-fdfd-fdfdfdfdfdfd"));
-                temperature = weatherService.getCharacteristics().get(0);
-                this.gatt.readCharacteristic(temperature);
+                temperatureCharacteristic = weatherService.getCharacteristics().get(0);
+                this.gatt.readCharacteristic(temperatureCharacteristic);
+                //this.gatt.disconnect();
             }
 
             @Override
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 if (null != this.gatt) {
-                    if (characteristic == temperature) {
-                        System.out.println("value:" + ByteBuffer.wrap(characteristic.getValue()).order(ByteOrder.LITTLE_ENDIAN).getFloat());
-                        readHeartRateMeasurement(characteristic);
+                    if (characteristic == temperatureCharacteristic) {
+                        readTempMeasurement(characteristic);
                     }
                 }
             }
@@ -170,27 +173,19 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
-    private void readHeartRateMeasurement(BluetoothGattCharacteristic characteristic) {
+    private void readTempMeasurement(BluetoothGattCharacteristic characteristic) {
         if (UUID.fromString("00002a1c-0000-1000-8000-00805f9b34fb").equals(characteristic.getUuid())) {
-            int flag = characteristic.getProperties();
-            int format = -1;
-            if ((flag & 0x01) != 0) {
-                format = BluetoothGattCharacteristic.FORMAT_FLOAT;
-            } else {
-                format = BluetoothGattCharacteristic.FORMAT_SFLOAT;
-            }
-            final int temp = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_FLOAT, 1);
+            final float temp = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT, 1);
             System.out.println("temp: "+temp);
-        } else {
-            final byte[] data = characteristic.getValue();
-            if (null != data && data.length > 0) {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for (byte byteChar : data) {
-                    stringBuilder.append(String.format("%02X", byteChar));
-                }
-                System.out.println("stringBuilder:"+stringBuilder);
-            }
         }
+    }
+
+    public void showTemp(View view) {
+
+    }
+
+    public void showHumid(View view) {
+
     }
 
 }

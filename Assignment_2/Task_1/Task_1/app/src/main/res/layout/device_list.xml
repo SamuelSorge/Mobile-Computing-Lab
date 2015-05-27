@@ -5,6 +5,13 @@
               android:layout_height="match_parent">
 
     <TextView android:id="@+id/deviceName" android:layout_width="match_parent" android:layout_height="wrap_content" android:onClick="connect" />
-    <!--<Button android:text="@string/show_weather" android:layout_width="wrap_content" android:layout_height="wrap_content" android:onClick="connect"/>-->
+
+    <!-- these controls are shown after successful connection to Weather App -->
+    <TextView android:id="@+id/connectedTo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/connected_to" android:visibility="invisible"/>
+    <Button android:id="@+id/showTempButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/show_temp" android:visibility="invisible" android:onClick="showTemp"/>
+    <Button android:id="@+id/showHumidButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/show_humid" android:visibility="invisible" android:onClick="showHumid"/>
+    <TextView android:id="@+id/tempField" android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="invisible"/>
+    <TextView android:id="@+id/humidField" android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="invisible"/>
+
 
 </LinearLayout>
