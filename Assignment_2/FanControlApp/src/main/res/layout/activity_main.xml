@@ -1,0 +1,32 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                android:paddingBottom="@dimen/activity_vertical_margin"
+                tools:context=".MainActivity">
+
+    <Button android:id="@+id/scanEnv" android:text="@string/scan_env" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:onClick="scanDevices"/>
+
+    <ListView android:id="@+id/deviceList" android:layout_width="match_parent" android:layout_height="wrap_content"
+              android:layout_below="@id/scanEnv"/>
+
+    <!-- these controls are shown after successful connection to Weather App -->
+    <TextView android:id="@+id/connectedTo" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="@string/connected_to" android:visibility="invisible" android:layout_below="@id/deviceList"/>
+    <TextView android:id="@+id/fanFieldLabel" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:labelFor="@+id/fanField" android:text="@string/setFanSpeed" android:layout_below="@id/connectedTo"
+              android:visibility="invisible"/>
+    <EditText android:id="@+id/fanField" android:inputType="numberDecimal" android:layout_width="match_parent"
+              android:layout_height="wrap_content" android:visibility="invisible" android:layout_below="@id/fanFieldLabel"/>
+    <Button android:id="@+id/changeFanSpeed" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:onClick="changeFanSpeed" android:text="@string/changeSpeed" android:visibility="invisible"
+            android:layout_below="@id/fanField"/>
+    <Button android:id="@+id/disconnectFromDevice" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/disconnect" android:visibility="invisible" android:onClick="disconnectFromDevice"
+            android:layout_below="@id/changeFanSpeed"/>
+
+</RelativeLayout>

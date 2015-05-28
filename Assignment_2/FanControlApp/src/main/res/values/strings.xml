@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Task_2</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="show_weather">Show Weather</string>
+    <string name="scan_env">Scan</string>
+    <string name="connected_to">Connected to Weather App!</string>
+    <string name="show_temp">Show Temp.</string>
+    <string name="show_humid">Show Humid.</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="setFanSpeed">Set fan speed</string>
+    <string name="changeSpeed">Change Speed</string>
+</resources>
