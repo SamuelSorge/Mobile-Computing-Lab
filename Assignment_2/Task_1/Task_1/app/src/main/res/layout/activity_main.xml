@@ -8,9 +8,11 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context=".MainActivity">
 
-    <Button android:id="@+id/scanEnv" android:text="@string/scan_env" android:layout_width="match_parent" android:layout_height="wrap_content" android:onClick="scanDevices"/>
+    <Button android:id="@+id/scanEnv" android:text="@string/scan_env" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:onClick="scanDevices"/>
 
-    <ListView android:id="@+id/deviceList" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_below="@id/scanEnv"/>
+    <ListView android:id="@+id/deviceList" android:layout_width="match_parent" android:layout_height="wrap_content"
+              android:layout_below="@id/scanEnv"/>
 
     <!-- these controls are shown after successful connection to Weather App -->
     <TextView android:id="@+id/connectedTo" android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -23,6 +25,8 @@
             android:text="@string/show_humid" android:visibility="invisible" android:onClick="showHumid" android:layout_below="@id/tempField"/>
     <TextView android:id="@+id/humidField" android:layout_width="wrap_content" android:layout_height="wrap_content"
               android:visibility="invisible" android:layout_below="@id/showHumidButton"/>
+    <Button android:id="@+id/disconnectFromDevice" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/disconnect" android:visibility="invisible" android:onClick="disconnectFromDevice" android:layout_below="@id/humidField"/>
 
 
 </RelativeLayout>

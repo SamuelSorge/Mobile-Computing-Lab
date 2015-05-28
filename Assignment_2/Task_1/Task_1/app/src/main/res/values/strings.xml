@@ -8,4 +8,5 @@
     <string name="connected_to">Connected to Weather App!</string>
     <string name="show_temp">Show Temp.</string>
     <string name="show_humid">Show Humid.</string>
+    <string name="disconnect">Disconnect</string>
 </resources>
