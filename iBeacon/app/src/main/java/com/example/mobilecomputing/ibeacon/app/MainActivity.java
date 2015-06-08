@@ -22,12 +22,17 @@ public class MainActivity extends Activity {
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
             new BluetoothAdapter.LeScanCallback() {
                 @Override
-                public void onLeScan(final BluetoothDevice device, int rssi,
-                                     byte[] scanRecord) {
+                public void onLeScan(final BluetoothDevice device, final int rssi,
+                                     final byte[] scanRecord) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-
+                            System.out.println("device: " + device.getName());
+                            System.out.println("device address: " + device.getAddress());
+                            Advertisment advertisment = new Advertisment(scanRecord);
+                            System.out.println("scan record: " + scanRecord);
+                            System.out.println(String.valueOf(scanRecord));
+                            System.out.println("rssi: "+rssi);
                         }
                     });
                 }
@@ -63,5 +68,36 @@ public class MainActivity extends Activity {
 
         mScanning = true;
         mBluetoothAdapter.startLeScan(mLeScanCallback);
+    }
+
+    class Advertisment {
+
+        public String prefix;
+        public String uuid;
+        public String major;
+        public String minor;
+        public int txPower;
+
+        public Advertisment(byte[] advertisementData) {
+            for (int i = 0; i < advertisementData.length; i++) {
+                System.out.println("data: " + String.valueOf(advertisementData[i]));
+                if (i < 9) {
+                    prefix += String.valueOf(advertisementData[i]);
+                }
+                if (i >= 9 && i < 25) {
+                    uuid += String.valueOf(advertisementData[i]);
+                }
+                if (i >= 25 && i < 27) {
+                    major += String.valueOf(advertisementData[i]);
+                }
+                if (i >= 27 && i < 29) {
+                    minor += String.valueOf(advertisementData[i]);
+                }
+                if (i >= 29 && i < 31) {
+                    int number = Integer.parseInt(String.valueOf(advertisementData[i]));
+                    System.out.println(number);
+                }
+            }
+        }
     }
 }
