@@ -130,6 +130,8 @@ public class MainActivity extends Activity {
     }
 
     /**
+     * http://electronics.stackexchange.com/questions/83354/calculate-distance-from-rssi
+     *
      * RSSI = TxPower - 10 * n * lg(d) n = 2 (in free space)
      * <p/>
      * d = 10 ^ ((TxPower - RSSI) / (10 * n))
@@ -139,7 +141,29 @@ public class MainActivity extends Activity {
      * @return distance
      */
     private double getDistance(int rssi, int txPower) {
-        return Math.pow(10d, ((double) txPower - rssi) / (10 * 2));
+        return Math.pow(10d, ((double) txPower - rssi) / (10 * 3));
+    }
+
+    /**
+     * alternative method to get distance.
+     * http://stackoverflow.com/questions/20416218/understanding-ibeacon-distancing
+     *
+     * @param txPower
+     * @param rssi
+     * @return
+     */
+    private double calculateAccuracy(int txPower, double rssi) {
+        if (rssi == 0) {
+            return -1.0; // if we cannot determine accuracy, return -1.
+        }
+
+        double ratio = rssi*1.0/txPower;
+        if (ratio < 1.0) {
+            return Math.pow(ratio,10);
+        }
+        else {
+            return (0.89976)*Math.pow(ratio,7.7095) + 0.111;
+        }
     }
 
     /**
