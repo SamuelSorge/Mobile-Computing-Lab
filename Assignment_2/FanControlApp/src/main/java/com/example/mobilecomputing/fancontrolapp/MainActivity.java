@@ -199,10 +199,10 @@ public class MainActivity extends AppCompatActivity {
         try {
             fanSpeed = Integer.parseInt(fanSpeedField.getText().toString());
             if (fanSpeed < 0 || fanSpeed > Short.MAX_VALUE * 2) {
-                fanSpeed = Integer.parseInt("" + Short.MAX_VALUE);
+                fanSpeed = Integer.parseInt("" + Short.MAX_VALUE * 2);
             }
         } catch (NumberFormatException e) {
-            fanSpeed = Integer.parseInt("" + Short.MAX_VALUE);
+            fanSpeed = Integer.parseInt("" + Short.MAX_VALUE * 2);
         }
         System.out.println("fan speed: "+fanSpeed);
         fanSpeedCharacteristic.setValue(fanSpeed, BluetoothGattCharacteristic.FORMAT_UINT16, 0);
