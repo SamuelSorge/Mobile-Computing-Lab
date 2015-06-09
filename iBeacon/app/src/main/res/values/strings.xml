@@ -2,4 +2,5 @@
     <string name="app_name">iBeacon</string>
     <string name="hello_world">Hello world!</string>
     <string name="scan_env">Scan</string>
+    <string name="clear_list">Clear</string>
 </resources>

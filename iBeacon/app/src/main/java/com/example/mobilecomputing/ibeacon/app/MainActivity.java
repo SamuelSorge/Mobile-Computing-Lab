@@ -9,12 +9,18 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+import java.util.*;
 
 public class MainActivity extends Activity {
 
     private static final int REQUEST_ENABLE_BT = 1;
     private static final long SCAN_PERIOD = 10000;
 
+    private ArrayAdapter<String> mDevicesArrayAdapter;
+    private Map<BluetoothDevice, List<Advertisement>> beacons = new HashMap<>(3);
     private BluetoothAdapter mBluetoothAdapter;
     private Handler mHandler = new Handler();
     private boolean mScanning;
@@ -27,12 +33,19 @@ public class MainActivity extends Activity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            System.out.println("device: " + device.getName());
-                            System.out.println("device address: " + device.getAddress());
-                            Advertisment advertisment = new Advertisment(scanRecord);
-                            System.out.println("scan record: " + scanRecord);
-                            System.out.println(String.valueOf(scanRecord));
-                            System.out.println("rssi: "+rssi);
+                            try {
+                                Advertisement advertisement = new Advertisement(scanRecord, rssi);
+                                List<Advertisement> advertisements;
+                                if (!beacons.containsKey(device)) {
+                                    advertisements = new ArrayList<>();
+                                    beacons.put(device, advertisements);
+                                } else {
+                                    advertisements = beacons.get(device);
+                                }
+                                advertisements.add(advertisement);
+                            } catch (Exception e) {
+                                System.out.println("Error.");
+                            }
                         }
                     });
                 }
@@ -54,6 +67,11 @@ public class MainActivity extends Activity {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+
+        mDevicesArrayAdapter = new ArrayAdapter<>(this, R.layout.device_list, R.id.deviceName);
+
+        ListView newDevicesListView = (ListView) findViewById(R.id.deviceList);
+        newDevicesListView.setAdapter(mDevicesArrayAdapter);
     }
 
     public void scanDevices(View view) {
@@ -63,6 +81,7 @@ public class MainActivity extends Activity {
             public void run() {
                 mScanning = false;
                 mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                generateDeviceList();
             }
         }, SCAN_PERIOD);
 
@@ -70,34 +89,104 @@ public class MainActivity extends Activity {
         mBluetoothAdapter.startLeScan(mLeScanCallback);
     }
 
-    class Advertisment {
+    /**
+     * Fills the device list with information to device, distance and numbers of received advertisements.
+     */
+    private void generateDeviceList() {
+        for (BluetoothDevice device : beacons.keySet()) {
+            List<Advertisement> advertisements = beacons.get(device);
+            double distanceSum = 0;
+            for (Advertisement ad : advertisements) {
+                distanceSum += ad.distance;
+            }
+            double calculatedDistance = distanceSum / advertisements.size();
+            StringBuilder deviceDetails = new StringBuilder();
+            deviceDetails.append("device: ").append(device.getName());
+            deviceDetails.append(", device address: ").append(device.getAddress());
+            deviceDetails.append(", distance: ").append(calculatedDistance);
+            deviceDetails.append(", advertisements: ").append(advertisements.size());
+            mDevicesArrayAdapter.add(deviceDetails.toString());
+        }
+    }
+
+    private String convertByteToHex(final byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X ", b));
+        }
+        return sb.toString();
+    }
+
+    private String convertByteToString(final byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append((int) b);
+        }
+        return sb.toString();
+    }
+
+    private int convertByteToInteger(final byte[] bytes) {
+        return (int) bytes[0];
+    }
+
+    /**
+     * RSSI = TxPower - 10 * n * lg(d) n = 2 (in free space)
+     * <p/>
+     * d = 10 ^ ((TxPower - RSSI) / (10 * n))
+     *
+     * @param rssi    current rssi
+     * @param txPower reference rssi at 1m
+     * @return distance
+     */
+    private double getDistance(int rssi, int txPower) {
+        return Math.pow(10d, ((double) txPower - rssi) / (10 * 2));
+    }
+
+    /**
+     * Clears device list and beacon map so that a user can make a "fresh" scan.
+     * @param view
+     */
+    public void clearList(View view) {
+        this.mDevicesArrayAdapter.clear();
+        this.beacons.clear();
+    }
+
+    /**
+     * Contains attributes of received advertisement.
+     */
+    class Advertisement {
 
         public String prefix;
         public String uuid;
         public String major;
         public String minor;
         public int txPower;
+        public int rssi;
+        public double distance;
 
-        public Advertisment(byte[] advertisementData) {
-            for (int i = 0; i < advertisementData.length; i++) {
-                System.out.println("data: " + String.valueOf(advertisementData[i]));
-                if (i < 9) {
-                    prefix += String.valueOf(advertisementData[i]);
-                }
-                if (i >= 9 && i < 25) {
-                    uuid += String.valueOf(advertisementData[i]);
-                }
-                if (i >= 25 && i < 27) {
-                    major += String.valueOf(advertisementData[i]);
-                }
-                if (i >= 27 && i < 29) {
-                    minor += String.valueOf(advertisementData[i]);
-                }
-                if (i >= 29 && i < 31) {
-                    int number = Integer.parseInt(String.valueOf(advertisementData[i]));
-                    System.out.println(number);
-                }
+        public Advertisement(byte[] advertisementData, int rssi) {
+            prefix = convertByteToHex(Arrays.copyOfRange(advertisementData, 0, 9));
+            uuid = convertByteToHex(Arrays.copyOfRange(advertisementData, 9, 25));
+            major = convertByteToString(Arrays.copyOfRange(advertisementData, 25, 27));
+            minor = convertByteToString(Arrays.copyOfRange(advertisementData, 27, 29));
+            txPower = convertByteToInteger(Arrays.copyOfRange(advertisementData, 29, 30));
+            if (txPower == 0) {
+                throw new IllegalStateException("No iBeacon!");
             }
+            this.rssi = rssi;
+            distance = getDistance(rssi, txPower);
+        }
+
+        @Override
+        public String toString() {
+            return new StringBuilder().append("prefix: ").append(prefix)
+                    .append(", uuid: ").append(uuid)
+                    .append(", major: ").append(major)
+                    .append(", minor:").append(minor)
+                    .append(", txPower: ").append(txPower)
+                    .append(", rssi: ").append(rssi)
+                    .append(", distance: ").append(distance)
+                    .toString();
         }
     }
 }
