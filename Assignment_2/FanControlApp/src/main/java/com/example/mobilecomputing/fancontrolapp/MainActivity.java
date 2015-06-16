@@ -41,7 +41,9 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mNewDevicesArrayAdapter.add(device.getName() + "/" + device.getAddress());
+                            if (device.getName() != null) {
+                                mNewDevicesArrayAdapter.add(device.getName() + "/" + device.getAddress());
+                            }
                             devices.add(device);
                         }
                     });
