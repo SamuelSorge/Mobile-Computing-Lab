@@ -129,9 +129,6 @@ public class MainActivity extends AppCompatActivity {
         // connect to target device by connecting to gatt server (expecting callback)
         targetDevice.connectGatt(this, true, new BluetoothGattCallback() {
 
-
-
-
             @Override
             public void onConnectionStateChange(BluetoothGatt pGatt, int status, int newState) {
                 String intentAction;

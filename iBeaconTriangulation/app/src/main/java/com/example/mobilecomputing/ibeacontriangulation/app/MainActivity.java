@@ -52,7 +52,6 @@ public class MainActivity extends Activity {
                                 }
                                 advertisements.add(advertisement);
                             } catch (Exception e) {
-                                e.printStackTrace();
                                 System.out.println("Error.");
                             }
                         }
@@ -84,6 +83,8 @@ public class MainActivity extends Activity {
     }
 
     public void scanDevices(View view) {
+        mDevicesArrayAdapter.clear();
+
         // Stops scanning after a pre-defined scan period.
         mHandler.postDelayed(new Runnable() {
             @Override
@@ -109,15 +110,20 @@ public class MainActivity extends Activity {
             String uuid = "";
             String major = "";
             String minor = "";
-            double distanceSum = 0;
+            int rssiSum = 0;
+            int txPowerSum = 0;
             for (Advertisement ad : advertisements) {
-                distanceSum += ad.distance;
+                rssiSum += ad.rssi;
+                txPowerSum += ad.txPower;
                 prefix = ad.prefix;
                 uuid = ad.uuid;
                 major = ad.major;
                 minor = ad.minor;
             }
-            double calculatedDistance = distanceSum / advertisements.size();
+
+            int calculatedRssi = rssiSum / advertisements.size();
+            int calculatedTxPower = txPowerSum / advertisements.size();
+            double calculatedDistance = getDistance(calculatedRssi, calculatedTxPower);
             distances.put(device.getAddress(), calculatedDistance);
 
             StringBuilder deviceDetails = new StringBuilder();
@@ -127,14 +133,19 @@ public class MainActivity extends Activity {
                     .append(", uuid: ").append(uuid)
                     .append(", major: ").append(major)
                     .append(", minor: ").append(minor);
+            deviceDetails.append(", txPower: ").append(calculatedTxPower);
+            deviceDetails.append(", rssi: ").append(calculatedRssi);
             deviceDetails.append(", distance: ").append(calculatedDistance);
             deviceDetails.append(", advertisements: ").append(advertisements.size());
 
             mDevicesArrayAdapter.add(deviceDetails.toString());
         }
 
-        CoordPoint position = getLocationByTrilateration(points.get(0), distances.get(points.get(0).getDeviceAddress()),
-                points.get(1), distances.get(points.get(1).getDeviceAddress()), points.get(2), distances.get(points.get(2).getDeviceAddress()));
+        final CoordPoint beacon1 = points.get(0);
+        final CoordPoint beacon2 = points.get(1);
+        final CoordPoint beacon3 = points.get(2);
+        CoordPoint position = getLocationByTrilateration(beacon1, distances.get(beacon1.getDeviceAddress()),
+                beacon2, distances.get(beacon2.getDeviceAddress()), beacon3, distances.get(beacon3.getDeviceAddress()));
         TextView devicePosition = (TextView) findViewById(R.id.devicePosition);
         devicePosition.setText("X: "+position.getX()+", Y: "+position.getY());
     }
@@ -171,7 +182,7 @@ public class MainActivity extends Activity {
      * @return distance
      */
     private double getDistance(int rssi, int txPower) {
-        return Math.pow(10d, ((double) txPower - rssi) / (10 * 3));
+        return Math.pow(10d, ((double) txPower - rssi) / (10 * 2));
     }
 
     /**
@@ -182,7 +193,7 @@ public class MainActivity extends Activity {
      * @param rssi
      * @return
      */
-    private double calculateAccuracy(int txPower, double rssi) {
+    private double calculateAccuracy(double rssi, int txPower) {
         if (rssi == 0) {
             return -1.0; // if we cannot determine accuracy, return -1.
         }
@@ -364,7 +375,6 @@ public class MainActivity extends Activity {
         public String minor;
         public int txPower;
         public int rssi;
-        public double distance;
 
         public Advertisement(byte[] advertisementData, int rssi) {
             prefix = convertByteToHex(Arrays.copyOfRange(advertisementData, 0, 9));
@@ -376,7 +386,6 @@ public class MainActivity extends Activity {
                 throw new IllegalStateException("No iBeacon!");
             }
             this.rssi = rssi;
-            distance = getDistance(rssi, txPower);
         }
 
         @Override
@@ -387,7 +396,6 @@ public class MainActivity extends Activity {
                     .append(", minor:").append(minor)
                     .append(", txPower: ").append(txPower)
                     .append(", rssi: ").append(rssi)
-                    .append(", distance: ").append(distance)
                     .toString();
         }
     }
