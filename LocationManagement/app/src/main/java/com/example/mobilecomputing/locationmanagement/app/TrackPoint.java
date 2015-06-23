@@ -9,6 +9,7 @@ public class TrackPoint {
     private double longitude;
     private float speed;
     private long time;
+    private float distance;
 
     public TrackPoint(final double latitude, final double longitude, final float speed, final long time) {
         this.latitude = latitude;
@@ -47,5 +48,13 @@ public class TrackPoint {
 
     public void setTime(final long time) {
         this.time = time;
+    }
+
+    public float getDistance() {
+        return distance;
+    }
+
+    public void setDistance(final float distance) {
+        this.distance = distance;
     }
 }

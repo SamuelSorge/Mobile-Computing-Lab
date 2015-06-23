@@ -34,6 +34,12 @@ public class LocationService extends Service {
             System.out.println("location latitude:"+location.getLatitude());
             System.out.println("location longitude:"+location.getLongitude());
             TrackPoint tp = new TrackPoint(location.getLatitude(), location.getLongitude(), location.getSpeed(), location.getTime());
+            if (trackPointList.size() == 0) {
+                tp.setDistance(0);
+            } else {
+                TrackPoint lastPoint = trackPointList.get(trackPointList.size() - 1);
+                tp.setDistance(getDistance(lastPoint, tp));
+            }
             trackPointList.add(tp);
         }
 
@@ -95,13 +101,9 @@ public class LocationService extends Service {
                     .append("  <metadata> <!-- Metadaten --> </metadata>");
             sb.append("    <trk>\n");
             sb.append("      <trkseg>\n");
-            TrackPoint lastPoint = trackPointList.get(0);
-            addTrackPointToString(sb, lastPoint, 0);
-            for (int i = 1; i < trackPointList.size(); i++) {
+            for (int i = 0; i < trackPointList.size(); i++) {
                 TrackPoint tp = trackPointList.get(i);
-                lastPoint = trackPointList.get(i-1);
-                float distance = getDistance(lastPoint, tp);
-                addTrackPointToString(sb, tp, distance);
+                addTrackPointToString(sb, tp);
             }
             sb.append("      </trkseg>\n");
             sb.append("    </trk>\n");
@@ -119,9 +121,9 @@ public class LocationService extends Service {
         return result[0];
     }
 
-    private void addTrackPointToString(final StringBuilder sb, final TrackPoint tp, final float distance) {
+    private void addTrackPointToString(final StringBuilder sb, final TrackPoint tp) {
         sb.append("        <trkpt lat=\""+tp.getLatitude()+"\" lon=\""+tp.getLongitude()+"\">")
-                .append("<cmt>"+distance+"</cmt>")
+                .append("<cmt>"+tp.getDistance()+"</cmt>")
                 .append("<time>" + tp.getTime() + "</time>")
                 .append("</trkpt>\n");
     }
