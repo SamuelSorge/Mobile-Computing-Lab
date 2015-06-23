@@ -26,6 +26,26 @@ public class LocationService extends Service {
     private LocationManager locationManager;
     private List<TrackPoint> trackPointList = new ArrayList<>();
 
+    private class LocationServiceImpl extends LocationService.Stub
+    {
+        public double getLatitude()
+        {
+            return trackPointList.get(trackPointList.size()-1).getLatitude();
+        }
+        public double getLongitude()
+        {
+            return trackPointList.get(trackPointList.size()-1).getLongitude();
+        }
+        public double getDistance() {
+            return trackPointList.get(trackPointList.size() - 1).getDistance();
+        }
+
+        public double getAverageSpeed()
+        {
+            return trackPointList.get(trackPointList.size()-1).getSpeed();
+        }
+    } // End of LocationService Stub implementation
+
     final LocationListener locationListener = new LocationListener() {
 
         @Override
