@@ -26,26 +26,6 @@ public class LocationService extends Service {
     private LocationManager locationManager;
     private List<TrackPoint> trackPointList = new ArrayList<>();
 
-    private class LocationServiceImpl extends LocationService.Stub
-    {
-        public double getLatitude()
-        {
-            return trackPointList.get(trackPointList.size()-1).getLatitude();
-        }
-        public double getLongitude()
-        {
-            return trackPointList.get(trackPointList.size()-1).getLongitude();
-        }
-        public double getDistance() {
-            return trackPointList.get(trackPointList.size() - 1).getDistance();
-        }
-
-        public double getAverageSpeed()
-        {
-            return trackPointList.get(trackPointList.size()-1).getSpeed();
-        }
-    } // End of LocationService Stub implementation
-
     final LocationListener locationListener = new LocationListener() {
 
         @Override
@@ -58,7 +38,7 @@ public class LocationService extends Service {
                 tp.setDistance(0);
             } else {
                 TrackPoint lastPoint = trackPointList.get(trackPointList.size() - 1);
-                tp.setDistance(getDistance(lastPoint, tp));
+                tp.setDistance(lastPoint.getDistance() + getDistance(lastPoint, tp));
             }
             trackPointList.add(tp);
         }
@@ -85,7 +65,7 @@ public class LocationService extends Service {
 
     @Override
     public IBinder onBind(final Intent intent) {
-        return null;
+        return new LocationServiceImpl();
     }
 
     @Override
@@ -147,4 +127,25 @@ public class LocationService extends Service {
                 .append("<time>" + tp.getTime() + "</time>")
                 .append("</trkpt>\n");
     }
+
+    private class LocationServiceImpl extends ILocationService.Stub {
+        public double getLatitude()
+        {
+            return trackPointList.get(trackPointList.size()-1).getLatitude();
+        }
+
+        public double getLongitude()
+        {
+            return trackPointList.get(trackPointList.size()-1).getLongitude();
+        }
+
+        public double getDistance() {
+            return trackPointList.get(trackPointList.size() - 1).getDistance();
+        }
+
+        public double getAverageSpeed()
+        {
+            return trackPointList.get(trackPointList.size()-1).getSpeed();
+        }
+    } // End of LocationService Stub implementation
 }

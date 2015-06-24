@@ -9,14 +9,18 @@
     <TextView android:id="@+id/positionLogger" android:text="@string/position_logger"
               android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="70dp"/>
 
+    <TextView android:id="@+id/testText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_below="@id/positionLogger"/>
+
     <Button android:id="@+id/startService" android:text="@string/start_service"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:onClick="startService" android:layout_below="@id/positionLogger"/>
+            android:onClick="startService" android:layout_below="@id/testText"/>
 
     <Button android:id="@+id/stopService" android:text="@string/stop_service"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:onClick="stopService" android:layout_below="@id/startService"/>
 
-
+    <Button android:id="@+id/updateData" android:text="@string/update_data"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:onClick="updateFields" android:layout_below="@id/stopService" />
 
 </RelativeLayout>

@@ -6,4 +6,5 @@
     <string name="start_service">Start Service</string>
     <string name="position_logger">Position Logger</string>
     <string name="stop_service">Stop Service</string>
+    <string name="update_data">Update data</string>
 </resources>
