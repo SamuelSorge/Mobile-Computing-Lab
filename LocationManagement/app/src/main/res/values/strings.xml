@@ -7,4 +7,8 @@
     <string name="position_logger">Position Logger</string>
     <string name="stop_service">Stop Service</string>
     <string name="update_data">Update data</string>
+    <string name="latitude">Latitude:</string>
+    <string name="longitude">Longitude:</string>
+    <string name="distance">Distance:</string>
+    <string name="speed">Average Speed:</string>
 </resources>

@@ -35,21 +35,35 @@ public class MainActivity extends Activity implements ServiceConnection {
     }
 
     public void startService(View view) {
-        Intent locationServiceIntent = new Intent(this, LocationService.class);
-        this.startService(locationServiceIntent);
-        bindService(locationServiceIntent, this, BIND_AUTO_CREATE);
+        try {
+            Intent locationServiceIntent = new Intent(this, LocationService.class);
+            this.startService(locationServiceIntent);
+            bindService(locationServiceIntent, this, BIND_AUTO_CREATE);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public void stopService(View view) {
-        Intent locationServiceIntent = new Intent(getApplicationContext(), LocationService.class);
-        stopService(locationServiceIntent);
-        unbindService(this);
+        try {
+            Intent locationServiceIntent = new Intent(getApplicationContext(), LocationService.class);
+            stopService(locationServiceIntent);
+            unbindService(this);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public void updateFields(View view) {
-        TextView testText = (TextView) findViewById(R.id.testText);
+        TextView latitudeValue = (TextView) findViewById(R.id.latitudeValue);
+        TextView longitudeValue = (TextView) findViewById(R.id.longitudeValue);
+        TextView distance = (TextView) findViewById(R.id.distanceValue);
+        TextView speed = (TextView) findViewById(R.id.speedValue);
         try {
-            testText.setText(locationService.getLatitude() + "---" + locationService.getLongitude());
+            latitudeValue.setText("" + locationService.getLatitude());
+            longitudeValue.setText("" + locationService.getLongitude());
+            distance.setText("" +  locationService.getDistance());
+            speed.setText("" + locationService.getAverageSpeed());
         } catch (RemoteException e) {
             System.out.println("Remote exception...");
         }

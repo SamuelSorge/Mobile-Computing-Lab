@@ -25,22 +25,41 @@ public class LocationService extends Service {
 
     private LocationManager locationManager;
     private List<TrackPoint> trackPointList = new ArrayList<>();
+    private List<Double> avgSpeedList = new ArrayList<>();
 
     final LocationListener locationListener = new LocationListener() {
 
         @Override
         public void onLocationChanged(final Location location) {
             Toast.makeText(getApplicationContext(), "Location changed...", Toast.LENGTH_SHORT).show();
-            System.out.println("location latitude:"+location.getLatitude());
-            System.out.println("location longitude:"+location.getLongitude());
-            TrackPoint tp = new TrackPoint(location.getLatitude(), location.getLongitude(), location.getSpeed(), location.getTime());
+            TrackPoint tp = new TrackPoint(location.getLatitude(), location.getLongitude(), location.getElapsedRealtimeNanos()/1000000000);
+            calcDistanceAndSpeed(tp);
+        }
+
+        private void calcDistanceAndSpeed(TrackPoint tp) {
+            double avgSpeed = 0;
             if (trackPointList.size() == 0) {
                 tp.setDistance(0);
+                tp.setSpeed(0);
             } else {
                 TrackPoint lastPoint = trackPointList.get(trackPointList.size() - 1);
-                tp.setDistance(lastPoint.getDistance() + getDistance(lastPoint, tp));
+                final double distance = getDistance(lastPoint, tp);
+                final double period = tp.getTime() - lastPoint.getTime();
+                final double speed;
+                if (period != 0) {
+                    speed = distance / period;
+                } else {
+                    speed = distance;
+                }
+
+                tp.setDistance(lastPoint.getDistance() + distance);
+                tp.setSpeed(speed);
+
+                avgSpeed = avgSpeedList.get(avgSpeedList.size() - 1);
+                avgSpeed = (avgSpeed + speed) / 2;
             }
             trackPointList.add(tp);
+            avgSpeedList.add(avgSpeed);
         }
 
         @Override
@@ -95,7 +114,7 @@ public class LocationService extends Service {
     }
 
     private void writeTrackPointsToLogFile(final File trackFile) {
-        try (FileWriter fileWriter = new FileWriter(trackFile);) {
+        try (FileWriter fileWriter = new FileWriter(trackFile)) {
             StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n")
                     .append("<gpx version=\"1.1\" creator=\"MobileComputing\">\n")
                     .append("  <metadata> <!-- Metadaten --> </metadata>");
@@ -145,7 +164,7 @@ public class LocationService extends Service {
 
         public double getAverageSpeed()
         {
-            return trackPointList.get(trackPointList.size()-1).getSpeed();
+            return avgSpeedList.get(avgSpeedList.size() - 1);
         }
     } // End of LocationService Stub implementation
 }

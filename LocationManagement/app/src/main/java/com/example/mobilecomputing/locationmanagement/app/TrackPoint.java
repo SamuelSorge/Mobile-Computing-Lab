@@ -7,14 +7,13 @@ public class TrackPoint {
 
     private double latitude;
     private double longitude;
-    private float speed;
-    private long time;
-    private float distance;
+    private double speed;
+    private double time;
+    private double distance;
 
-    public TrackPoint(final double latitude, final double longitude, final float speed, final long time) {
+    public TrackPoint(final double latitude, final double longitude, final double time) {
         this.latitude = latitude;
         this.longitude = longitude;
-        this.speed = speed;
         this.time = time;
     }
 
@@ -34,27 +33,27 @@ public class TrackPoint {
         this.longitude = longitude;
     }
 
-    public float getSpeed() {
+    public double getSpeed() {
         return speed;
     }
 
-    public void setSpeed(final float speed) {
+    public void setSpeed(final double speed) {
         this.speed = speed;
     }
 
-    public long getTime() {
+    public double getTime() {
         return time;
     }
 
-    public void setTime(final long time) {
+    public void setTime(final double time) {
         this.time = time;
     }
 
-    public float getDistance() {
+    public double getDistance() {
         return distance;
     }
 
-    public void setDistance(final float distance) {
+    public void setDistance(final double distance) {
         this.distance = distance;
     }
 }

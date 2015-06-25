@@ -1,26 +1,42 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:tools="http://schemas.android.com/tools"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="#0099cc"
-                android:screenOrientation="portrait"
-                tools:context=".MainActivity">
-    
-    <TextView android:id="@+id/positionLogger" android:text="@string/position_logger"
-              android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="70dp"/>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#0099cc"
+              android:screenOrientation="portrait"
+              android:orientation="vertical"
+              tools:context=".MainActivity">
 
-    <TextView android:id="@+id/testText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_below="@id/positionLogger"/>
+    <TextView android:id="@+id/positionLogger" android:text="@string/position_logger"
+              android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp"/>
+
+    <TextView android:id="@+id/latitude" android:text="@string/latitude"
+              android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    <TextView android:id="@+id/latitudeValue" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+
+    <TextView android:id="@+id/longitude" android:text="@string/longitude"
+              android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    <TextView android:id="@+id/longitudeValue" android:layout_width="wrap_content"
+              android:layout_height="wrap_content"/>
+
+    <TextView android:id="@+id/distance" android:text="@string/distance"
+              android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    <TextView android:id="@+id/distanceValue" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+
+    <TextView android:id="@+id/speed" android:text="@string/speed"
+              android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    <TextView android:id="@+id/speedValue" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
 
     <Button android:id="@+id/startService" android:text="@string/start_service"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:onClick="startService" android:layout_below="@id/testText"/>
+            android:onClick="startService"/>
 
     <Button android:id="@+id/stopService" android:text="@string/stop_service"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:onClick="stopService" android:layout_below="@id/startService"/>
+            android:onClick="stopService"/>
 
     <Button android:id="@+id/updateData" android:text="@string/update_data"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:onClick="updateFields" android:layout_below="@id/stopService" />
+            android:onClick="updateFields"/>
 
-</RelativeLayout>
+</LinearLayout>
