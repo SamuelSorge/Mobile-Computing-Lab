@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,41 +26,34 @@ public class LocationService extends Service {
 
     private LocationManager locationManager;
     private List<TrackPoint> trackPointList = new ArrayList<>();
-    private List<Double> avgSpeedList = new ArrayList<>();
+    private double speedSum = 0;
 
     final LocationListener locationListener = new LocationListener() {
 
         @Override
         public void onLocationChanged(final Location location) {
             Toast.makeText(getApplicationContext(), "Location changed...", Toast.LENGTH_SHORT).show();
-            TrackPoint tp = new TrackPoint(location.getLatitude(), location.getLongitude(), location.getElapsedRealtimeNanos()/1000000000);
+            TrackPoint tp = new TrackPoint(location.getLatitude(), location.getLongitude(), location.getElapsedRealtimeNanos() / 1000000000);
             calcDistanceAndSpeed(tp);
         }
 
-        private void calcDistanceAndSpeed(TrackPoint tp) {
-            double avgSpeed = 0;
+        private void calcDistanceAndSpeed(final TrackPoint tp) {
+            double speed = 0;
             if (trackPointList.size() == 0) {
                 tp.setDistance(0);
-                tp.setSpeed(0);
             } else {
                 TrackPoint lastPoint = trackPointList.get(trackPointList.size() - 1);
                 final double distance = getDistance(lastPoint, tp);
                 final double period = tp.getTime() - lastPoint.getTime();
-                final double speed;
+
                 if (period != 0) {
                     speed = distance / period;
-                } else {
-                    speed = distance;
                 }
 
                 tp.setDistance(lastPoint.getDistance() + distance);
-                tp.setSpeed(speed);
-
-                avgSpeed = avgSpeedList.get(avgSpeedList.size() - 1);
-                avgSpeed = (avgSpeed + speed) / 2;
             }
             trackPointList.add(tp);
-            avgSpeedList.add(avgSpeed);
+            speedSum += speed;
         }
 
         @Override
@@ -91,47 +85,82 @@ public class LocationService extends Service {
     public void onCreate() {
         super.onCreate();
         this.locationManager = (LocationManager) this.getSystemService(LOCATION_SERVICE);
+        this.trackPointList.clear();
+        this.speedSum = 0;
     }
 
     @Override
     public int onStartCommand(final Intent intent, final int flags, final int startId) {
+        this.trackPointList.clear();
+        this.speedSum = 0;
         Toast.makeText(this, "Location Service is starting...", Toast.LENGTH_SHORT).show();
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10, 1, locationListener, getMainLooper());
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
-    public void onDestroy() {
+    public boolean onUnbind(Intent intent) {
+        System.out.println("unbind called...");
         locationManager.removeUpdates(locationListener);
         File sdDir = Environment.getExternalStorageDirectory();
         File trackFile = new File(sdDir, LOG_FILE);
-        if (trackFile.delete()) {
-            System.out.println("Deleted old track file and start writing to new one...");
+        System.out.println("Trying to write tracks to file...");
+        if (!trackFile.exists() || trackFile.exists() && trackFile.delete()) {
+            System.out.println("Old track file deleted.");
+            System.out.println("Start writing to new track file...");
             writeTrackPointsToLogFile(trackFile);
         }
         Toast.makeText(this, "Location Service has stopped...", Toast.LENGTH_SHORT).show();
-        super.onDestroy();
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void onDestroy() {
+//        System.out.println("onDestroy called...");
+//        locationManager.removeUpdates(locationListener);
+//        File sdDir = Environment.getExternalStorageDirectory();
+//        File trackFile = new File(sdDir, LOG_FILE);
+//        if (trackFile.exists() && trackFile.delete()) {
+//            System.out.println("Old track file deleted.");
+//        }
+//        System.out.println("Start writing to new track file...");
+//        writeTrackPointsToLogFile(trackFile);
+//        Toast.makeText(this, "Location Service has stopped...", Toast.LENGTH_SHORT).show();
+//        super.onDestroy();
     }
 
     private void writeTrackPointsToLogFile(final File trackFile) {
-        try (FileWriter fileWriter = new FileWriter(trackFile)) {
-            StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n")
-                    .append("<gpx version=\"1.1\" creator=\"MobileComputing\">\n")
-                    .append("  <metadata> <!-- Metadaten --> </metadata>");
-            sb.append("    <trk>\n");
-            sb.append("      <trkseg>\n");
-            for (int i = 0; i < trackPointList.size(); i++) {
-                TrackPoint tp = trackPointList.get(i);
-                addTrackPointToString(sb, tp);
+        System.out.println("1");
+        try {
+            System.out.println("2");
+            if (trackFile.createNewFile()) {
+                System.out.println("2 if");
+                FileOutputStream fileOutputStream = getApplicationContext().openFileOutput(LOG_FILE, MODE_PRIVATE);
+                StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n")
+                        .append("<gpx version=\"1.1\" creator=\"MobileComputing\">\n")
+                        .append("  <metadata> <!-- Metadaten --> </metadata>");
+                sb.append("    <trk>\n");
+                sb.append("      <trkseg>\n");
+                for (int i = 0; i < trackPointList.size(); i++) {
+                    TrackPoint tp = trackPointList.get(i);
+                    addTrackPointToString(sb, tp);
+                }
+                sb.append("      </trkseg>\n");
+                sb.append("    </trk>\n");
+                sb.append("</gpx>");
+                System.out.println("DATA: " + sb.toString());
+                fileOutputStream.write(sb.toString().getBytes());
+                fileOutputStream.flush();
+                fileOutputStream.close();
+                System.out.println("Flushed data to file...");
+            } else {
+                System.out.println("2 else");
             }
-            sb.append("      </trkseg>\n");
-            sb.append("    </trk>\n");
-            sb.append("</gpx>");
-
-            fileWriter.write(sb.toString());
         } catch (IOException e) {
             System.out.println("Error during file access...");
+            e.printStackTrace();
         }
+        System.out.println("3");
     }
 
     private float getDistance(final TrackPoint lastPoint, final TrackPoint tp) {
@@ -141,30 +170,43 @@ public class LocationService extends Service {
     }
 
     private void addTrackPointToString(final StringBuilder sb, final TrackPoint tp) {
-        sb.append("        <trkpt lat=\""+tp.getLatitude()+"\" lon=\""+tp.getLongitude()+"\">")
-                .append("<cmt>"+tp.getDistance()+"</cmt>")
+        sb.append("        <trkpt lat=\"" + tp.getLatitude() + "\" lon=\"" + tp.getLongitude() + "\">")
+                .append("<cmt>" + tp.getDistance() + "</cmt>")
                 .append("<time>" + tp.getTime() + "</time>")
                 .append("</trkpt>\n");
     }
 
     private class LocationServiceImpl extends ILocationService.Stub {
-        public double getLatitude()
-        {
-            return trackPointList.get(trackPointList.size()-1).getLatitude();
+        public double getLatitude() {
+            if (!trackPointList.isEmpty()) {
+                return trackPointList.get(trackPointList.size() - 1).getLatitude();
+            } else {
+                return 0;
+            }
         }
 
-        public double getLongitude()
-        {
-            return trackPointList.get(trackPointList.size()-1).getLongitude();
+        public double getLongitude() {
+            if (!trackPointList.isEmpty()) {
+                return trackPointList.get(trackPointList.size() - 1).getLongitude();
+            } else {
+                return 0;
+            }
         }
 
         public double getDistance() {
-            return trackPointList.get(trackPointList.size() - 1).getDistance();
+            if (!trackPointList.isEmpty()) {
+                return trackPointList.get(trackPointList.size() - 1).getDistance();
+            } else {
+                return 0;
+            }
         }
 
-        public double getAverageSpeed()
-        {
-            return avgSpeedList.get(avgSpeedList.size() - 1);
+        public double getAverageSpeed() {
+            if (!trackPointList.isEmpty()) {
+                return speedSum / trackPointList.size();
+            } else {
+                return 0;
+            }
         }
     } // End of LocationService Stub implementation
 }
