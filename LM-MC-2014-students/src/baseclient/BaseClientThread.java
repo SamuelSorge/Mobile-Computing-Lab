@@ -5,9 +5,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 
-import common.InitializationMsg;
+import common.*;
 
 public class BaseClientThread extends Thread {
 
@@ -53,28 +54,46 @@ public class BaseClientThread extends Thread {
 
     @Override
     public void run() {
-        // connect to HLR (server)
+        // connect to VLR (server)
         try {
 
             System.out.println("Base Client Thread running");
 
             // Client connection to VLR
             socket = new Socket(serverIP, port);
+            System.out.println("Connection to: "+serverIP+", port: "+port);
             objectOutput = new ObjectOutputStream(socket.getOutputStream());
             objectOutput.flush();
             objectInput = new ObjectInputStream(socket.getInputStream());
+
 
             // Initialize VLR with location areas for which the VLR is responsible
             InitializationMsg im = new InitializationMsg();
             im.locationAreas = vlrArea;
             objectOutput.writeObject(im);
 
-            while (!interrupted()) {
+            while (!interrupted() && parent.conn != null && !parent.conn.isClosed()) {
                 //TODO: handle messages from VLR
+                try {
+                    BaseMessage message = (BaseMessage) objectInput.readObject();
+                    if (message instanceof SearchResponseMessage) {
+                        handleSearchResponse((SearchResponseMessage) message);
+                    }
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                }
             }
 
         } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
+
+    private void handleSearchResponse(SearchResponseMessage message) {
+        System.out.println("search response");
+        System.out.println("Vehicle id: "+message.targetId+", position: ["+message.targetLA.getX()+","+message.targetLA.getY()+"]");
     }
 
     public void setServiceAreas(ArrayList<Rectangle2D> las) {
@@ -83,19 +102,51 @@ public class BaseClientThread extends Thread {
 
     public void stopBaseClientThread() {
         //TODO - close connection to VLR ...
+        sendMessage(new SimulationCompleteMessage());
+
+        try {
+            objectOutput.flush();
+            objectOutput.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void sendLocationUpdate(String id2, Rectangle2D currentLA, Rectangle2D previousLA) {
-        // TODO - update location of vehicle with id2, from previousLA to currentLA
+    public void sendLocationUpdate(String id, Rectangle2D currentLA, Rectangle2D previousLA) {
+        // TODO - update location of vehicle with id, from previousLA to currentLA
         // NOTE: previousLA is null for very first location update
+        LocationUpdateMessage message = new LocationUpdateMessage();
+        message.id = id;
+        message.currentLA = currentLA;
+        if (previousLA != null) {
+            message.previousLA = previousLA;
+        } else {
+            message.previousLA = currentLA;
+        }
+        sendMessage(message);
     }
 
-    public void sendRemoveMessage(String id2) {
-        // TODO - Inform VLR that vehicle with id2 has connected to another VLR and thus needs to be removed
-
+    public void sendRemoveMessage(String id) {
+        // TODO - Inform VLR that vehicle with id has connected to another VLR and thus needs to be removed
+        RemoveMessage message = new RemoveMessage();
+        message.id = id;
+        sendMessage(message);
     }
 
-    public void sendSearch(String id2, String id3) {
+    public void sendSearch(String sourceId, String targetId) {
         // TODO - initiate a search message
+        SearchMessage message = new SearchMessage();
+        message.sourceId = sourceId;
+        message.targetId = targetId;
+        sendMessage(message);
+    }
+
+    private void sendMessage(BaseMessage message) {
+        try {
+            objectOutput.writeObject(message);
+            objectOutput.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

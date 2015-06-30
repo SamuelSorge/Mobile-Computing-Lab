@@ -84,6 +84,8 @@ public class BaseClient extends Thread {
                 vlrServer.add(props.getProperty(Constants.VLRPREFIX + i));
             }
 
+            System.out.println("number of VLR servers: "+vlrServer.size());
+
             // port of VLRs
             port = Integer.parseInt(props.getProperty(Constants.PORTVLR));
 

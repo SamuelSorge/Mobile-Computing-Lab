@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import common.Constants;
@@ -22,6 +24,8 @@ public class HLRServer extends Thread {
     private ServerSocket s;
 
     private volatile Boolean running;
+
+    public Map<String, VLRHandlerThread> vehicleToVLR = new HashMap<>();
 
     public HLRServer() {
         try {
@@ -54,7 +58,7 @@ public class HLRServer extends Thread {
                     Socket clientConnection = s.accept();
                     new VLRHandlerThread(clientConnection, this).start();
                 } catch (IOException ioe) {
-
+                    ioe.printStackTrace();
                 }
             }
         } catch (IOException ioe) {

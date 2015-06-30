@@ -13,42 +13,18 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
 
 import common.BaseMessage;
 import common.Constants;
+import common.SearchMessage;
+import common.SearchResponseMessage;
 
 
 public class VLR extends Thread {
 
     // constant for properties file
     private static final String propfile = "vlr.properties";
-
-    /*
-     * Constructor of VLR
-     */
-    public VLR() {
-
-        try {
-
-            Properties props = System.getProperties();
-            props.load(new BufferedInputStream(new FileInputStream(propfile)));
-
-            this.serverip = props.getProperty(Constants.HLRIP);
-            this.hlrport = Integer.parseInt(props.getProperty(Constants.PORTHLR));
-            this.vlrport = Integer.parseInt(props.getProperty(Constants.PORTVLR));
-
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-    }
 
     /**
      * Connection to HLR
@@ -75,11 +51,36 @@ public class VLR extends Thread {
      */
     public int vlrport;
 
-
     //Location Areas for whom this VLR is responsible
     ArrayList<Rectangle2D> managedLA = null;
 
     volatile Boolean running = true;
+
+    public Map<String, Rectangle2D> vehicleToLA = new HashMap<>();
+
+    /*
+     * Constructor of VLR
+     */
+    public VLR() {
+
+        try {
+
+            Properties props = System.getProperties();
+            props.load(new BufferedInputStream(new FileInputStream(propfile)));
+
+            this.serverip = props.getProperty(Constants.HLRIP);
+            this.hlrport = Integer.parseInt(props.getProperty(Constants.PORTHLR));
+            this.vlrport = Integer.parseInt(props.getProperty(Constants.PORTVLR));
+
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
 
     @Override
     public void run() {
@@ -100,13 +101,47 @@ public class VLR extends Thread {
             // wait for incoming messages from HLR
             while (!Thread.interrupted() && running) {
                 //TODO: handle messages from HLR
+                try {
+                    BaseMessage message = (BaseMessage) objectInput.readObject();
+                    if (message instanceof SearchMessage) {
+                        handleSearchMessage((SearchMessage) message);
+                    } else if (message instanceof SearchResponseMessage) {
+                        handleSearchResponseMessage((SearchResponseMessage) message);
+                    }
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
             }
 
             // close socket to HLR
             socket.close();
 
         } catch (UnknownHostException e) {
+            e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
+
+    private void handleSearchMessage(SearchMessage message) throws IOException {
+        System.out.println("search message");
+        if (vehicleToLA.containsKey(message.targetId)) {
+            SearchResponseMessage searchResponseMessage = new SearchResponseMessage();
+            searchResponseMessage.targetLA = vehicleToLA.get(message.targetId);
+            searchResponseMessage.targetId = message.targetId;
+            searchResponseMessage.sourceId = message.sourceId;
+            objectOutput.writeObject(searchResponseMessage);
+            objectOutput.flush();
+        } else {
+            System.out.println("Target vehicle not found.");
+        }
+    }
+
+    private void handleSearchResponseMessage(SearchResponseMessage message) {
+        System.out.println("search response");
+        this.vlrServer.sendMessageToBaseClient(message);
     }
 }
