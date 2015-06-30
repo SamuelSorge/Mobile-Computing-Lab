@@ -7,8 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 
-
-public class VLRServer extends Thread  {
+public class VLRServer extends Thread {
 
     private ServerSocket s;
     private volatile Boolean running = true;
@@ -17,29 +16,28 @@ public class VLRServer extends Thread  {
     private VLR parent;
 
     VLRServer(VLR parent) {
-	this.parent = parent;
+        this.parent = parent;
     }
 
     @Override
     public void run() {
-	try {
+        try {
 
-	    // Wait on connection from base client
-	    s = new ServerSocket(parent.vlrport);
-	    Socket clientConnection = s.accept();
+            // Wait on connection from base client
+            s = new ServerSocket(parent.vlrport);
+            Socket clientConnection = s.accept();
 
-	    objectOutput = new ObjectOutputStream(clientConnection.getOutputStream());
-	    objectOutput.flush();
-	    objectInput = new ObjectInputStream(clientConnection.getInputStream());
+            objectOutput = new ObjectOutputStream(clientConnection.getOutputStream());
+            objectOutput.flush();
+            objectInput = new ObjectInputStream(clientConnection.getInputStream());
 
-	    while (running) {
-		//TODO: Handle Messages from base client thread
-	    }
-	} catch (IOException ioe) {
+            while (running) {
+                //TODO: Handle Messages from base client thread
+            }
+        } catch (IOException ioe) {
 
-	}
+        }
     }
 
- 
 
 }

@@ -31,38 +31,48 @@ public class VLR extends Thread {
      */
     public VLR() {
 
-	try {
+        try {
 
-	    Properties props = System.getProperties();
-	    props.load(new BufferedInputStream(new FileInputStream(propfile)));
+            Properties props = System.getProperties();
+            props.load(new BufferedInputStream(new FileInputStream(propfile)));
 
-	    this.serverip = props.getProperty(Constants.HLRIP);
-	    this.hlrport = Integer.parseInt(props.getProperty(Constants.PORTHLR));
-	    this.vlrport = Integer.parseInt(props.getProperty(Constants.PORTVLR));
+            this.serverip = props.getProperty(Constants.HLRIP);
+            this.hlrport = Integer.parseInt(props.getProperty(Constants.PORTHLR));
+            this.vlrport = Integer.parseInt(props.getProperty(Constants.PORTVLR));
 
-	} catch (FileNotFoundException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (IOException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	}
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
     }
 
-    /** Connection to HLR */
+    /**
+     * Connection to HLR
+     */
     public Socket socket = null;
     ObjectInputStream objectInput;
     ObjectOutputStream objectOutput;
 
-    /** Connection to Clients */
+    /**
+     * Connection to Clients
+     */
     public VLRServer vlrServer;
 
-    /** Ip address of HLR */
+    /**
+     * Ip address of HLR
+     */
     public String serverip;
-    /** Port of HLR */
+    /**
+     * Port of HLR
+     */
     public int hlrport;
-    /** Port to Base Client */
+    /**
+     * Port to Base Client
+     */
     public int vlrport;
 
 
@@ -73,30 +83,30 @@ public class VLR extends Thread {
 
     @Override
     public void run() {
-	try {
+        try {
 
-	    System.out.println("Running VLR Server");
+            System.out.println("Running VLR Server");
 
-	    //Start Server to accept connection from BaseClientThread
-	    vlrServer = new VLRServer(this);
-	    vlrServer.start();
+            //Start Server to accept connection from BaseClientThread
+            vlrServer = new VLRServer(this);
+            vlrServer.start();
 
-	    // connect to HLR (server)
-	    socket = new Socket(serverip, hlrport);
-	    objectOutput = new ObjectOutputStream(socket.getOutputStream());
-	    objectOutput.flush();
-	    objectInput = new ObjectInputStream(socket.getInputStream());
+            // connect to HLR (server)
+            socket = new Socket(serverip, hlrport);
+            objectOutput = new ObjectOutputStream(socket.getOutputStream());
+            objectOutput.flush();
+            objectInput = new ObjectInputStream(socket.getInputStream());
 
-	    // wait for incoming messages from HLR
-	    while (!Thread.interrupted() && running) {
-		//TODO: handle messages from HLR
-	    }
+            // wait for incoming messages from HLR
+            while (!Thread.interrupted() && running) {
+                //TODO: handle messages from HLR
+            }
 
-	    // close socket to HLR
-	    socket.close();
+            // close socket to HLR
+            socket.close();
 
-	} catch (UnknownHostException e) {
-	} catch (IOException e) {
-	}
-    }    
+        } catch (UnknownHostException e) {
+        } catch (IOException e) {
+        }
+    }
 }
