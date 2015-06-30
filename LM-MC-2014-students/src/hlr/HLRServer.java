@@ -37,7 +37,9 @@ public class HLRServer extends Thread {
             //listen port of HLR
             this.port = Integer.parseInt(props.getProperty(Constants.PORTHLR));
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
         }
 
     }
