@@ -1,0 +1,22 @@
+#number of vlrs
+de.uni-stuttgart.ipvs.mclab.numvlr=4
+#ip addresses of vrls
+de.uni-stuttgart.ipvs.mclab.vlr0=
+de.uni-stuttgart.ipvs.mclab.vlr1=
+de.uni-stuttgart.ipvs.mclab.vlr2=
+de.uni-stuttgart.ipvs.mclab.vlr3=
+#port number of vlr
+de.uni-stuttgart.ipvs.mclab.vlr.port=
+#4 numla cells per LA
+de.uni-stuttgart.ipvs.mclab.numla=
+#Duration (in s) of simul.
+de.uni-stuttgart.ipvs.mclab.numSimulationSteps=
+#probability of initiating a search
+de.uni-stuttgart.ipvs.mclab.pageProbability=
+#path to sumo configuration
+de.uni-stuttgart.ipvs.mclab.sumoconfig=
+#path to sumo executable
+it.polito.appeal.traci.sumo_exe=
+
+#ip of hlr
+de.uni-stuttgart.ipvs.mclab.hlr.ip
