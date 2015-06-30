@@ -8,6 +8,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
@@ -100,42 +101,29 @@ public class LocationService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        System.out.println("unbind called...");
+        log("unbind called...");
         locationManager.removeUpdates(locationListener);
+        log("state: " + Environment.getExternalStorageState());
         File sdDir = Environment.getExternalStorageDirectory();
+        log("sd dir:" + sdDir.getPath());
         File trackFile = new File(sdDir, LOG_FILE);
-        System.out.println("Trying to write tracks to file...");
+        log("Trying to write tracks to file...");
         if (!trackFile.exists() || trackFile.exists() && trackFile.delete()) {
-            System.out.println("Old track file deleted.");
-            System.out.println("Start writing to new track file...");
+            log("Old track file deleted.");
+            log("Start writing to new track file...");
             writeTrackPointsToLogFile(trackFile);
         }
         Toast.makeText(this, "Location Service has stopped...", Toast.LENGTH_SHORT).show();
         return super.onUnbind(intent);
     }
 
-    @Override
-    public void onDestroy() {
-//        System.out.println("onDestroy called...");
-//        locationManager.removeUpdates(locationListener);
-//        File sdDir = Environment.getExternalStorageDirectory();
-//        File trackFile = new File(sdDir, LOG_FILE);
-//        if (trackFile.exists() && trackFile.delete()) {
-//            System.out.println("Old track file deleted.");
-//        }
-//        System.out.println("Start writing to new track file...");
-//        writeTrackPointsToLogFile(trackFile);
-//        Toast.makeText(this, "Location Service has stopped...", Toast.LENGTH_SHORT).show();
-//        super.onDestroy();
-    }
-
     private void writeTrackPointsToLogFile(final File trackFile) {
-        System.out.println("1");
+        log("1");
         try {
-            System.out.println("2");
+            log("2");
             if (trackFile.createNewFile()) {
-                System.out.println("2 if");
-                FileOutputStream fileOutputStream = getApplicationContext().openFileOutput(LOG_FILE, MODE_PRIVATE);
+                log("2 if");
+                FileOutputStream fileOutputStream = new FileOutputStream(trackFile);
                 StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n")
                         .append("<gpx version=\"1.1\" creator=\"MobileComputing\">\n")
                         .append("  <metadata> <!-- Metadaten --> </metadata>");
@@ -148,19 +136,19 @@ public class LocationService extends Service {
                 sb.append("      </trkseg>\n");
                 sb.append("    </trk>\n");
                 sb.append("</gpx>");
-                System.out.println("DATA: " + sb.toString());
+                log("DATA: " + sb.toString());
                 fileOutputStream.write(sb.toString().getBytes());
                 fileOutputStream.flush();
                 fileOutputStream.close();
-                System.out.println("Flushed data to file...");
+                log("Flushed data to file...");
             } else {
-                System.out.println("2 else");
+                log("2 else");
             }
         } catch (IOException e) {
-            System.out.println("Error during file access...");
+            log("Error during file access...");
             e.printStackTrace();
         }
-        System.out.println("3");
+        log("3");
     }
 
     private float getDistance(final TrackPoint lastPoint, final TrackPoint tp) {
@@ -174,6 +162,10 @@ public class LocationService extends Service {
                 .append("<cmt>" + tp.getDistance() + "</cmt>")
                 .append("<time>" + tp.getTime() + "</time>")
                 .append("</trkpt>\n");
+    }
+
+    private static void log(String logMessage) {
+        Log.i("LocationService", logMessage);
     }
 
     private class LocationServiceImpl extends ILocationService.Stub {

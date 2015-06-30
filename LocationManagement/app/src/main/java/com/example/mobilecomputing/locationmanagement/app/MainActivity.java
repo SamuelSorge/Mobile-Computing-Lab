@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -24,13 +25,13 @@ public class MainActivity extends Activity implements ServiceConnection {
 
     @Override
     public void onServiceConnected(final ComponentName name, final IBinder service) {
-        System.out.println("Received connected service object...");
+        log("Received connected service object...");
         locationService = ILocationService.Stub.asInterface(service);
     }
 
     @Override
     public void onServiceDisconnected(final ComponentName name) {
-        System.out.println("Disconnect service...");
+        log("Disconnect service...");
         locationService = null;
     }
 
@@ -40,7 +41,7 @@ public class MainActivity extends Activity implements ServiceConnection {
             this.startService(locationServiceIntent);
             bindService(locationServiceIntent, this, BIND_AUTO_CREATE);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            log(e.getMessage());
         }
     }
 
@@ -50,7 +51,7 @@ public class MainActivity extends Activity implements ServiceConnection {
             stopService(locationServiceIntent);
             unbindService(this);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            log(e.getMessage());
         }
     }
 
@@ -62,10 +63,14 @@ public class MainActivity extends Activity implements ServiceConnection {
         try {
             latitudeValue.setText("" + locationService.getLatitude());
             longitudeValue.setText("" + locationService.getLongitude());
-            distance.setText("" +  locationService.getDistance());
+            distance.setText("" + locationService.getDistance());
             speed.setText("" + locationService.getAverageSpeed());
         } catch (RemoteException e) {
-            System.out.println("Remote exception...");
+            log("Remote exception...");
         }
+    }
+
+    private static void log(String logMessage) {
+        Log.i("MainActivity", logMessage);
     }
 }
