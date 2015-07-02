@@ -1,6 +1,7 @@
 package hlr;
 
 import common.*;
+import org.apache.log4j.*;
 
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
@@ -11,6 +12,9 @@ import java.util.ArrayList;
 
 
 public class VLRHandlerThread extends Thread {
+
+    private static Logger logger = Logger.getLogger(VLRHandlerThread.class);
+
     private Socket socket;
     HLRServer parent;
 
@@ -21,7 +25,21 @@ public class VLRHandlerThread extends Thread {
 
     volatile Boolean running = true;
 
+    private int msgCounter = 0;
+
     public VLRHandlerThread(Socket socket, HLRServer hlr) {
+        try {
+            SimpleLayout layout = new SimpleLayout();
+            ConsoleAppender consoleAppender = new ConsoleAppender( layout );
+            logger.addAppender( consoleAppender );
+            FileAppender fileAppender = new FileAppender( layout, "logs/task3.log", true );
+            logger.addAppender( fileAppender );
+            // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+            logger.setLevel( Level.INFO );
+        } catch( Exception ex ) {
+            System.out.println( ex );
+        }
+
         try {
             this.socket = socket;
             this.parent = hlr;
@@ -71,6 +89,7 @@ public class VLRHandlerThread extends Thread {
             VLRHandlerThread handler = this.parent.vehicleToVLR.get(searchMessage.targetId);
             handler.objectOutput.writeObject(searchMessage);
             handler.objectOutput.flush();
+            msgCounter++;
         } else {
             System.out.println("Location of target vehicle is unknown.");
         }
@@ -82,6 +101,7 @@ public class VLRHandlerThread extends Thread {
             VLRHandlerThread handler = this.parent.vehicleToVLR.get(message.sourceId);
             handler.objectOutput.writeObject(message);
             handler.objectOutput.flush();
+            msgCounter++;
         } else {
             System.out.println("Location of source vehicle is unknown.");
         }
@@ -95,6 +115,7 @@ public class VLRHandlerThread extends Thread {
     private void handleSimulationComplete(SimulationCompleteMessage simulationCompleteMessage) {
         System.out.println("sim complete");
         this.running = false;
+        logger.info("VLR Handler Thread: "+msgCounter);
     }
 
 

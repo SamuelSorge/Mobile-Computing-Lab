@@ -1,6 +1,7 @@
 package vlr;
 
 import common.*;
+import org.apache.log4j.*;
 
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
@@ -11,6 +12,8 @@ import java.net.Socket;
 
 
 public class VLRServer extends Thread {
+
+    private static Logger logger = Logger.getLogger(VLRServer.class);
 
     private ServerSocket s;
     private volatile Boolean running = true;
@@ -24,6 +27,18 @@ public class VLRServer extends Thread {
 
     @Override
     public void run() {
+        try {
+            SimpleLayout layout = new SimpleLayout();
+            ConsoleAppender consoleAppender = new ConsoleAppender( layout );
+            logger.addAppender( consoleAppender );
+            FileAppender fileAppender = new FileAppender( layout, "logs/task3.log", true );
+            logger.addAppender( fileAppender );
+            // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+            logger.setLevel( Level.INFO );
+        } catch( Exception ex ) {
+            System.out.println( ex );
+        }
+
         try {
 
             // Wait on connection from base client
@@ -65,6 +80,7 @@ public class VLRServer extends Thread {
         this.parent.managedLA = message.locationAreas;
         this.parent.objectOutput.writeObject(message);
         this.parent.objectOutput.flush();
+        this.parent.msgCounter.addAndGet(1);
     }
 
     private void handleSearchMessage(SearchMessage searchMessage) {
@@ -76,6 +92,7 @@ public class VLRServer extends Thread {
             searchResponseMessage.targetLA = locationArea;
             searchResponseMessage.sourceId = searchMessage.sourceId;
             searchResponseMessage.targetId = searchMessage.targetId;
+            searchResponseMessage.time = searchMessage.time;
 
             sendMessage(searchResponseMessage);
         }
@@ -88,6 +105,9 @@ public class VLRServer extends Thread {
         // propagate to HLR
         this.parent.objectOutput.writeObject(message);
         this.parent.objectOutput.flush();
+        this.parent.msgCounter.addAndGet(1);
+
+        logger.info("VLR Server: "+this.parent.msgCounter.get());
     }
 
     private void handleLocationUpdate(LocationUpdateMessage message) throws IOException {
@@ -98,6 +118,7 @@ public class VLRServer extends Thread {
         if (!this.parent.managedLA.contains(message.previousLA) || message.previousLA == message.currentLA) {
             this.parent.objectOutput.writeObject(message);
             this.parent.objectOutput.flush();
+            this.parent.msgCounter.addAndGet(1);
         }
     }
 
@@ -115,6 +136,7 @@ public class VLRServer extends Thread {
         try {
             objectOutput.writeObject(message);
             objectOutput.flush();
+            this.parent.msgCounter.addAndGet(1);
         } catch (IOException e) {
             e.printStackTrace();
         }

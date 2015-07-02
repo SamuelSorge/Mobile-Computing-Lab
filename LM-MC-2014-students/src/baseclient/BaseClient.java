@@ -21,8 +21,12 @@ import java.util.Map.Entry;
 
 import common.Constants;
 
+import org.apache.log4j.*;
+
 
 public class BaseClient extends Thread {
+
+    private static Logger logger = Logger.getLogger(BaseClient.class);
 
     // constant for property file
     private static final String propfile = "baseclient.properties";
@@ -168,7 +172,21 @@ public class BaseClient extends Thread {
 
     @Override
     public void run() {
+
+        try {
+            SimpleLayout layout = new SimpleLayout();
+            ConsoleAppender consoleAppender = new ConsoleAppender( layout );
+            logger.addAppender( consoleAppender );
+            FileAppender fileAppender = new FileAppender( layout, "logs/task3.log", true );
+            logger.addAppender( fileAppender );
+            // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+            logger.setLevel( Level.INFO );
+        } catch( Exception ex ) {
+            System.out.println( ex );
+        }
+
         // initialization
+        logger.info("start BaseClient...");
 
         //read properties from .properties file
         readProperties();
@@ -176,6 +194,8 @@ public class BaseClient extends Thread {
         initTrafficSimulation();
         //connect to VLRs
         setupConnections();
+
+        logger.info("setup complete");
 
         //run simulation
         runSimulation();

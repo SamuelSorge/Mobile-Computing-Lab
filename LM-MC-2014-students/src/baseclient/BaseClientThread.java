@@ -9,9 +9,11 @@ import java.net.SocketException;
 import java.util.ArrayList;
 
 import common.*;
+import org.apache.log4j.*;
 
 public class BaseClientThread extends Thread {
 
+    private static Logger logger = Logger.getLogger(BaseClientThread.class);
 
     //ip and port of VLR to whom this client connects
     String serverIP = null;
@@ -30,6 +32,8 @@ public class BaseClientThread extends Thread {
 
     //parent BaseClient
     BaseClient parent = null;
+
+    int msgCounter = 0;
 
     public BaseClientThread(int id, String serverIP, int port, ArrayList<Rectangle2D> vlrArea,
                             BaseClient parent) {
@@ -54,6 +58,19 @@ public class BaseClientThread extends Thread {
 
     @Override
     public void run() {
+
+        try {
+            SimpleLayout layout = new SimpleLayout();
+            ConsoleAppender consoleAppender = new ConsoleAppender( layout );
+            logger.addAppender( consoleAppender );
+            FileAppender fileAppender = new FileAppender( layout, "logs/task3.log", true );
+            logger.addAppender( fileAppender );
+            // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+            logger.setLevel( Level.INFO );
+        } catch( Exception ex ) {
+            System.out.println( ex );
+        }
+
         // connect to VLR (server)
         try {
 
@@ -93,7 +110,10 @@ public class BaseClientThread extends Thread {
 
     private void handleSearchResponse(SearchResponseMessage message) {
         System.out.println("search response");
-        System.out.println("Vehicle id: "+message.targetId+", position: ["+message.targetLA.getX()+","+message.targetLA.getY()+"]");
+        System.out.println("Vehicle id: " + message.targetId + ", position: [" + message.targetLA.getX() + "," + message.targetLA.getY() + "]");
+
+        final long currentTime = System.currentTimeMillis();
+        logger.info("RESPONSE, "+message.time+", "+ currentTime +", "+(currentTime-message.time));
     }
 
     public void setServiceAreas(ArrayList<Rectangle2D> las) {
@@ -103,6 +123,8 @@ public class BaseClientThread extends Thread {
     public void stopBaseClientThread() {
         //TODO - close connection to VLR ...
         sendMessage(new SimulationCompleteMessage());
+
+        logger.info("BaseClient Counter: "+msgCounter);
 
         try {
             objectOutput.flush();
@@ -138,6 +160,7 @@ public class BaseClientThread extends Thread {
         SearchMessage message = new SearchMessage();
         message.sourceId = sourceId;
         message.targetId = targetId;
+        message.time = System.currentTimeMillis();
         sendMessage(message);
     }
 
@@ -145,6 +168,7 @@ public class BaseClientThread extends Thread {
         try {
             objectOutput.writeObject(message);
             objectOutput.flush();
+            msgCounter++;
         } catch (IOException e) {
             e.printStackTrace();
         }

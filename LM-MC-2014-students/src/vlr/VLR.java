@@ -14,14 +14,18 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import common.BaseMessage;
 import common.Constants;
 import common.SearchMessage;
 import common.SearchResponseMessage;
+import org.apache.log4j.*;
 
 
 public class VLR extends Thread {
+
+    private static Logger logger = Logger.getLogger(VLR.class);
 
     // constant for properties file
     private static final String propfile = "vlr.properties";
@@ -58,6 +62,8 @@ public class VLR extends Thread {
 
     public Map<String, Rectangle2D> vehicleToLA = new HashMap<>();
 
+    AtomicInteger msgCounter = new AtomicInteger(0);
+
     /*
      * Constructor of VLR
      */
@@ -85,6 +91,18 @@ public class VLR extends Thread {
     @Override
     public void run() {
         try {
+
+            try {
+                SimpleLayout layout = new SimpleLayout();
+                ConsoleAppender consoleAppender = new ConsoleAppender( layout );
+                logger.addAppender( consoleAppender );
+                FileAppender fileAppender = new FileAppender( layout, "logs/task3.log", true );
+                logger.addAppender( fileAppender );
+                // ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+                logger.setLevel( Level.INFO );
+            } catch( Exception ex ) {
+                System.out.println( ex );
+            }
 
             System.out.println("Running VLR Server");
 
@@ -133,8 +151,10 @@ public class VLR extends Thread {
             searchResponseMessage.targetLA = vehicleToLA.get(message.targetId);
             searchResponseMessage.targetId = message.targetId;
             searchResponseMessage.sourceId = message.sourceId;
+            searchResponseMessage.time = message.time;
             objectOutput.writeObject(searchResponseMessage);
             objectOutput.flush();
+            msgCounter.addAndGet(1);
         } else {
             System.out.println("Target vehicle not found.");
         }
@@ -143,5 +163,6 @@ public class VLR extends Thread {
     private void handleSearchResponseMessage(SearchResponseMessage message) {
         System.out.println("search response");
         this.vlrServer.sendMessageToBaseClient(message);
+        msgCounter.addAndGet(1);
     }
 }
