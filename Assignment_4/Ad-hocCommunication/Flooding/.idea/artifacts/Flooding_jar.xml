@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Flooding:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Flooding_jar</output-path>
+    <root id="archive" name="Flooding.jar">
+      <element id="module-output" name="Flooding" />
+    </root>
+  </artifact>
+</component>
