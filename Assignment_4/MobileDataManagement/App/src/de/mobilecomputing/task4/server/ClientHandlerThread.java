@@ -77,7 +77,6 @@ public class ClientHandlerThread extends Thread {
         switch (action.getActionId()) {
             case SAVE:
                 System.out.println("Client wants to save messages...");
-                // TODO: nice-to-have: check if own client is sending this request
                 int savedMessages = this.server.saveMessages(messages);
                 sendResponse(new Response<Integer>(savedMessages));
                 System.out.println("Response was sent back to client...");

@@ -57,7 +57,6 @@ public class NodeClient implements INodeClient {
 
     @Override
     public Message writeNewMessage(String text) {
-        // TODO: differentiate between first message and "normal" one
         Message newMessage = new Message(this.getName(), text);
         this.localMessages.add(newMessage);
         return newMessage;
@@ -87,7 +86,6 @@ public class NodeClient implements INodeClient {
                 this.outputStream.writeObject(action);
                 this.outputStream.flush();
                 this.localMessagePointer = totalMessages;
-                // TODO: check response if every message has been saved or send/receive ACK for each
                 System.out.println("Waiting for response...");
                 Response<Integer> savedMessages = (Response<Integer>) this.inputStream.readObject();
                 return savedMessages.getResponseObject();
