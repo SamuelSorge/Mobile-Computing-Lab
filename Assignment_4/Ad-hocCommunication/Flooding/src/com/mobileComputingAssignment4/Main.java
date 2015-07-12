@@ -2,6 +2,8 @@ package com.mobileComputingAssignment4;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
 
@@ -12,6 +14,8 @@ public class Main {
     private static final int teamNumber = 5;
     private static final int port = 5000 + 10 * teamNumber;
     private static String msg;
+    private static List<InetAddress> nodes = new ArrayList<InetAddress>();
+
 
     private static int i = 1;
 
@@ -31,6 +35,7 @@ public class Main {
     public static void main(String[] args) throws UnknownHostException {
 	// write your code here
         byte[] bcast_msg;
+        byte[] rec_msg = new byte[200];
         byte[] buf = new byte[100];
 
         try {
@@ -53,31 +58,38 @@ public class Main {
 
         senderPacket = new DatagramPacket(bcast_msg, bcast_msg.length, InetAddress.getByName("192.168.132.255"), port);
         receiverPacket = new DatagramPacket(buf, buf.length);
-        try {
-            senderSock.send(senderPacket);
-            System.out.println("Message sent");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        try {
-            Thread.sleep( 1000 );
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
-        while (true)
+        while (i < 10)
         {
+            System.out.println("Sending message ");
+            try {
+                senderSock.send(senderPacket);
+                System.out.println("Message sent");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                System.out.println("Sleep ");
+                Thread.sleep( 1000 );
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             System.out.println("Receiving message " + i);
             try {
                 receiverSock.receive(receiverPacket);
-                System.out.print(receiverPacket.getData());
-
+                nodes.add(receiverPacket.getAddress());//TODO: when to stop listening
+                System.out.println(receiverPacket.getData().toString());
+                System.out.println(receiverPacket.getSocketAddress().toString());
             } catch (IOException e) {
                 e.printStackTrace();
             }
             i++;
 
+        }
+        for (int j = 0; j < nodes.size()-1; j++) {
+            System.out.println("Address: " + nodes.get(j));
         }
 
     }
