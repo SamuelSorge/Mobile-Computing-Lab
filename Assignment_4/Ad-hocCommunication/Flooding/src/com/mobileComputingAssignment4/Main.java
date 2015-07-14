@@ -1,5 +1,7 @@
 package com.mobileComputingAssignment4;
 
+import javafx.scene.chart.PieChart;
+
 import java.io.IOException;
 import java.net.*;
 import java.text.Collator;
@@ -20,11 +22,14 @@ public class Main
     private static final int teamNumber = 5;
     private static final int port = 5000 + 10 * teamNumber;
 
-    private static List<InetAddress> nodes = new ArrayList<InetAddress>();
+    private static List<DatagramPacket> packets= new ArrayList<DatagramPacket>();
     private static List<String> nodeAddresses = new ArrayList<String>();
 
     private static String ackMsg = "";
     private static String bcastMsg = "";
+
+    private static Client client;
+    private static Server server;
 
     public static void main(String[] args) throws IOException
     {
@@ -64,7 +69,23 @@ public class Main
         // Create new receiver packet to store received message data
         recvPacket = new DatagramPacket(recvBuf, recvBuf.length);
 
-        bcastMsg = args[0];
+        System.out.print("Which Machine? \n 1: 129.69.210.77 \n 2: 129.69.210.78 \n 3: 129.69.210.1 \n" +
+                " 4: 129.69.210.2 \n" +
+                " 5: 129.69.210.3");
+        String input = System.console().readLine();
+
+        switch (input) {
+            case "1": bcastMsg ="129.69.210.77";
+                break;
+            case "2": bcastMsg ="129.69.210.78";
+                break;
+            case "3": bcastMsg ="129.69.210.1";
+                break;
+            case "4": bcastMsg ="129.69.210.2";
+                break;
+            case "5": bcastMsg ="129.69.210.3";
+                break;
+        }
         sendBuf = bcastMsg.getBytes();
         System.out.println("Message initialized with: "+ bcastMsg);
 
@@ -77,18 +98,23 @@ public class Main
             System.out.println("Sending UDP message ");
             sendSock.send(sendPacket);
 
+            try {
+                Thread.sleep( 1000 );
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
             System.out.println("Receiving UDP messages ");
             try
             {
                 recvBuf = null;
                 // Receive a packet
                 recvSock.receive(recvPacket);
+                packets.add(recvPacket);
 
-                // Print received packet data
-                System.out.println("Packet received from: " + recvPacket.getAddress().getHostAddress());
-                System.out.println("Received packet data: " + new String(recvPacket.getData()));
 
-                String test = new String(recvPacket.getData());
+
+               /* String test = new String(recvPacket.getData());
                 Collator collator = Collator.getInstance(Locale.US);
                 System.out.println("Convert: " + collator.compare(test, bcastMsg));
 
@@ -96,10 +122,16 @@ public class Main
                 if (0 == collator.compare(test, bcastMsg))
                 {
                     System.out.println("Received own broadcast message");
+                    // Print received packet data
+                    System.out.println("Packet received from: " + recvPacket.getAddress().getHostAddress());
+                    System.out.println("Received packet data: " + new String(recvPacket.getData()));
                 }
                 else
                 {
                    System.out.println("Received another broadcast message");
+                    // Print received packet data
+                    System.out.println("Packet received from: " + recvPacket.getAddress().getHostAddress());
+                    System.out.println("Received packet data: " + new String(recvPacket.getData()));
                     ackMsg = "Received your Hello World";
                     ackBuf = ackMsg.getBytes();
                     ackPacket = new DatagramPacket(ackBuf, ackBuf.length, recvPacket.getAddress(), recvPacket.getPort());
@@ -107,12 +139,15 @@ public class Main
                     System.out.println("Ack sent to: " + ackPacket.getAddress().getHostAddress());
                 }
 
-                //nodes.add(receiverPacket.getAddress());
+                //nodes.add(receiverPacket.getAddress());*/
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
             i++;
+        }
+        for (int j = 0; j <= packets.size()-1; j++) {
+            System.out.println("Messages: " + new String(packets.get(j).getData()));
         }
     }
 
