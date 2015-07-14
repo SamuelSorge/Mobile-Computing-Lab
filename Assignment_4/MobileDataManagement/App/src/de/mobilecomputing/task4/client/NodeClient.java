@@ -11,7 +11,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by SebastianHesse on 06.07.2015.
@@ -26,6 +28,8 @@ public class NodeClient implements INodeClient {
 
     private List<Message> localMessages;
     private int localMessagePointer = 0;
+
+    private Map<String, List<Message>> downloadedMessages = new HashMap<>();
 
     public NodeClient(String name, String serverAddress, int serverPort) {
         if (serverAddress != null && !serverAddress.isEmpty() && name != null && !name.isEmpty()) {
@@ -90,7 +94,7 @@ public class NodeClient implements INodeClient {
                 Response<Integer> savedMessages = (Response<Integer>) this.inputStream.readObject();
                 return savedMessages.getResponseObject();
             }
-        } catch (IOException|ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return 0;
@@ -113,17 +117,39 @@ public class NodeClient implements INodeClient {
             outputStream.flush();
             ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 
-            outputStream.writeObject(new Action(ActionId.GET_ALL, null));
-            outputStream.flush();
-            Response<List<Message>> response = (Response<List<Message>>) inputStream.readObject();
-            result = response.getResponseObject();
+            result = getMessages(serverAddress, outputStream, inputStream);
 
             inputStream.close();
             outputStream.close();
             socket.close();
-        } catch (IOException|ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+        return result;
+    }
+
+    private List<Message> getMessages(String serverAddress, ObjectOutputStream outputStream, ObjectInputStream inputStream) throws IOException, ClassNotFoundException {
+        List<Message> result;
+        Response<List<Message>> response;
+        List<Message> alreadyDownloadedMessages;
+        Action actionToSend;
+
+        if (this.downloadedMessages.containsKey(serverAddress) && (alreadyDownloadedMessages = this.downloadedMessages.get(serverAddress)).size() > 0) {
+            List<Message> lastMessageList = new ArrayList<>();
+            lastMessageList.add(alreadyDownloadedMessages.get(alreadyDownloadedMessages.size() - 1));
+            actionToSend = new Action(ActionId.GET, lastMessageList);
+        } else {
+            alreadyDownloadedMessages = new ArrayList<>();
+            actionToSend = new Action(ActionId.GET_ALL, null);
+        }
+
+        outputStream.writeObject(actionToSend);
+        outputStream.flush();
+        response = (Response<List<Message>>) inputStream.readObject();
+        result = response.getResponseObject();
+        alreadyDownloadedMessages.addAll(result);
+        this.downloadedMessages.put(serverAddress, alreadyDownloadedMessages);
+
         return result;
     }
 

@@ -81,6 +81,11 @@ public class ClientHandlerThread extends Thread {
                 sendResponse(new Response<Integer>(savedMessages));
                 System.out.println("Response was sent back to client...");
                 break;
+            case GET:
+                System.out.println("Client wants to have new messages...");
+                Message lastMessage = messages.get(messages.size()-1);
+                sendResponse(new Response<List<Message>>(this.server.getNewMessages(lastMessage)));
+                break;
             case GET_ALL:
                 System.out.println("Client wants to have all messages...");
                 sendResponse(new Response<List<Message>>(this.server.getAllMessages()));
