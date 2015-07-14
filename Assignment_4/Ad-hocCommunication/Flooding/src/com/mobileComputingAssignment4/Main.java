@@ -1,5 +1,26 @@
 package com.mobileComputingAssignment4;
 
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args)
+    {
+        Boolean clientMode = false;
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("\n Do you want to execute the Flooding including a client (true or false?) \n");
+        clientMode = scanner.nextBoolean();
+
+        Thread serverThread = new Thread(ServerThread.getInstance());
+        serverThread.start();
+
+        Thread clientThread = new Thread(ClientThread.getInstance());
+        if(clientMode) {
+            clientThread.start();
+        }
+    }
+}
+/*
 import javafx.scene.chart.PieChart;
 
 import java.io.IOException;
@@ -87,7 +108,7 @@ public class Main
 
     }
 
-}
+}*/
     /*private static DatagramSocket recvSock ;
     private static DatagramSocket ackSock ;
     private static DatagramSocket sendSock;
