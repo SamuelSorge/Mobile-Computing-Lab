@@ -8,10 +8,87 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Scanner;
 
 public class Main
 {
-    private static DatagramSocket recvSock ;
+    private static DatagramSocket receiverSocket;
+    private static DatagramSocket senderBroadcastSocket;
+    private static DatagramSocket senderAcknowledgeSocket;
+
+    private static final int teamNumber = 5;
+    private static final int port = 5000 + 10 * teamNumber;
+
+    private static Server serverThread;
+    private static Client clientThread;
+
+    private static boolean clientMode =  false;
+    private static String userInput = "";
+
+    private static Scanner scanner;
+
+    private static String bcastMsg = "";
+
+    public static void main(String[] args)
+    {
+        System.out.print("On which Machine is the Flooding executed? \n 1: 129.69.210.77 \n 2: 129.69.210.78 \n 3: 129.69.210.1 \n" +
+                " 4: 129.69.210.2 \n" +
+                " 5: 129.69.210.3 \n");
+        userInput = System.console().readLine();
+
+        scanner = new Scanner(System.in);
+        System.out.print("\n Do you want to execute the Flooding including a client (true or false? \n");
+        clientMode = scanner.nextBoolean();
+
+        switch (userInput) {
+            case "1": bcastMsg ="129.69.210.77";
+                break;
+            case "2": bcastMsg ="129.69.210.78";
+                break;
+            case "3": bcastMsg ="129.69.210.1";
+                break;
+            case "4": bcastMsg ="129.69.210.2";
+                break;
+            case "5": bcastMsg ="129.69.210.3";
+                break;
+        }
+
+        try {
+            receiverSocket = new DatagramSocket(port);
+            senderBroadcastSocket = new DatagramSocket();
+            senderAcknowledgeSocket = new DatagramSocket();
+        } catch (SocketException e)
+        {
+            e.printStackTrace();
+        }
+
+        try {
+            receiverSocket.setBroadcast(true);
+            senderBroadcastSocket.setBroadcast(true);
+            senderAcknowledgeSocket.setBroadcast(false);
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+
+        serverThread = new Server(receiverSocket, senderBroadcastSocket, senderAcknowledgeSocket, bcastMsg);
+        clientThread = new Client(senderBroadcastSocket, bcastMsg, port);
+
+        serverThread.start();
+        if(clientMode)
+        {
+            clientThread.start();
+        }
+
+
+
+
+
+
+
+    }
+
+}
+    /*private static DatagramSocket recvSock ;
     private static DatagramSocket ackSock ;
     private static DatagramSocket sendSock;
 
@@ -140,7 +217,7 @@ public class Main
                 }
 
                 //nodes.add(receiverPacket.getAddress());*/
-            } catch (IOException e) {
+         /*   } catch (IOException e) {
                 e.printStackTrace();
             }
 
@@ -219,5 +296,5 @@ public class Main
             System.out.println("Address: " + nodes.get(j));
         }
 
-    }*/
-}
+    }
+}*/
