@@ -55,8 +55,8 @@ public class Message implements Serializable {
         return "Message{" +
                 "time=" + time +
                 ", sender=" + sender +
-                ", history=" + history +
                 ", text='" + text + '\'' +
+                ", history=" + history +
                 '}';
     }
 }
