@@ -11,13 +11,15 @@ public class Main {
         System.out.print("\n Do you want to execute the Flooding including a client (true or false?) \n");
         clientMode = scanner.nextBoolean();
 
-        Thread serverThread = new Thread(ServerThread.getInstance());
-        serverThread.start();
-
         Thread clientThread = new Thread(ClientThread.getInstance());
         if(clientMode) {
             clientThread.start();
         }
+
+        Thread serverThread = new Thread(ServerThread.getInstance(clientMode));
+        serverThread.start();
+
+
     }
 }
 /*

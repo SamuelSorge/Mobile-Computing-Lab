@@ -24,12 +24,15 @@ public class ServerThread implements Runnable {
 
 
     Boolean messageNotYetForwarded = true;
+    private static Boolean clientModeOn = false;
+    private static int seqNr = 0;
+    private static int seqNrTemp = 0;
 
     public void run() {
         try {
             sock = new DatagramSocket(port);
             sock.setBroadcast(true);
-
+            System.out.println(getClass().getName() + " Client mode! " + clientModeOn);
             while(true) {
                 System.out.println(getClass().getName() + " Receiving broadcast messages!");
 
@@ -40,33 +43,56 @@ public class ServerThread implements Runnable {
                 System.out.println(getClass().getName() + " Message received from: "+ packet.getAddress().getHostAddress());
                 System.out.println(getClass().getName() + " Received message data: "+ new String(packet.getData()));
 
-                String message = new String(packet.getData()).trim();
-                if (message.equals("DISCOVER_NODE_REQUEST")) {
+
+                //String message = new String(packet.getData()).trim();
+                Message msg = new Message(packet.getData());
+                seqNr = msg.getSequenceNumber();
+                String message = new String(msg.getMessageData()).trim();
+                System.out.println(getClass().getName() + " SequenceNumber: " + msg.getSequenceNumber() + ", HopCount: " + msg.getHopCount() + (", messageData: " + new String(msg.getMessageData())));
+                //if (message.equals("DISCOVER_NODE_REQUEST")) {
+                if (message.equals("DISCOVER_NODE_REQUEST") && !clientModeOn && (seqNr != seqNrTemp)) {
                     byte[] sendData = "DISCOVER_NODE_RESPONSE".getBytes();
 
-                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, packet.getAddress(), packet.getPort());
+                    Message ackMsg = new Message(msg.getSequenceNumber(), msg.getHopCount(), sendData);
+                    System.out.println(getClass().getName() + " New message data: "+ new String(ackMsg.getMessageData()));
+                    //DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, packet.getAddress(), packet.getPort());
+                    DatagramPacket sendPacket = new DatagramPacket(ackMsg.toByte(), ackMsg.getLength(), packet.getAddress(), packet.getPort());
                     sock.send(sendPacket);
 
-                    System.out.println(getClass().getName() + " Packet sent to: " + sendPacket.getAddress().getHostAddress());
-                }
-                else if (message.equals("DISCOVER_NODE_REQUEST_FORWARDED")){
+                    System.out.println(getClass().getName() + " Hop Count: " + msg.getHopCount());
+                    System.out.println(getClass().getName() + " Response sent to: " + sendPacket.getAddress().getHostAddress());
+                }//else if (message.equals("DISCOVER_NODE_REQUEST_FORWARDED")){
+                else if (message.equals("DISCOVER_NODE_REQUEST_FORWARDED") && !clientModeOn){
                     byte[] sendData = "DISCOVER_NODE_RESPONSE_FORWARDED".getBytes();
 
-                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, packet.getAddress(), packet.getPort());
+                    Message fwdAckMsg = new Message(msg.getSequenceNumber(), msg.getHopCount(), sendData);
+                    System.out.println(getClass().getName() + " New message data: "+ new String(fwdAckMsg.getMessageData()));
+                    //DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, packet.getAddress(), packet.getPort());
+                    DatagramPacket sendPacket = new DatagramPacket(fwdAckMsg.toByte(), fwdAckMsg.getLength(), packet.getAddress(), packet.getPort());
                     sock.send(sendPacket);
 
-                    System.out.println(getClass().getName() + " Packet sent to: " + sendPacket.getAddress().getHostAddress());
+                    System.out.println(getClass().getName() + " Hop Count: " + msg.getHopCount());
+                    System.out.println(getClass().getName() + " Forward Response sent to: " + sendPacket.getAddress().getHostAddress());
                 }
 
-                if (messageNotYetForwarded) {
+                if (seqNr != seqNrTemp)
+                {
+                   messageNotYetForwarded = true;
+                }
+
+                if (messageNotYetForwarded && !clientModeOn) {
                     byte[] sendData = "DISCOVER_NODE_REQUEST_FORWARDED".getBytes();
 
-                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("192.168.132.255"), port);
+                    Message fwdMsg = new Message(msg.getSequenceNumber(), msg.getHopCount()+1, sendData);
+                    //DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("192.168.132.255"), port);
+                    DatagramPacket sendPacket = new DatagramPacket(fwdMsg.toByte(), fwdMsg.getLength(), packet.getAddress(), packet.getPort());
                     sock.send(sendPacket);
 
                     System.out.println(getClass().getName() + " Packet forwarded to: 192.168.132.255");
                     messageNotYetForwarded = false;
                 }
+
+                seqNrTemp = seqNr;
             }
         } catch (SocketException e) {
             e.printStackTrace();
@@ -76,7 +102,9 @@ public class ServerThread implements Runnable {
 
     }
 
-    public static ServerThread getInstance() {
+    public static ServerThread getInstance(boolean clientMode) {
+
+        clientModeOn = clientMode;
         return ServerThreadHolder.INSTANCE;
     }
 
