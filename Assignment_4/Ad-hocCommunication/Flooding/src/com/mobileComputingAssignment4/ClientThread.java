@@ -31,7 +31,7 @@ public class ClientThread implements Runnable {
             System.out.println(getClass().getName() + "\n Packet sent to: 192.168.132.255");
 
 
-            byte[] recvBuf = new byte[500];
+           /* byte[] recvBuf = new byte[500];
             DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
 
 
@@ -47,7 +47,7 @@ public class ClientThread implements Runnable {
                     //  if(msg.getMessageData().toString().equals("DISCOVER_NODE_RESPONSE")) {
                     if (message.equals("DISCOVER_NODE_RESPONSE")) {
                         System.out.println(getClass().getName() + " Response correct!");
-                    }
+                    }*/
 
 
 

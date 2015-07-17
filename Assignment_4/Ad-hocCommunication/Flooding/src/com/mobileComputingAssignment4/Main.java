@@ -3,8 +3,7 @@ package com.mobileComputingAssignment4;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) throws InterruptedException {
         Boolean clientMode = false;
         Scanner scanner = new Scanner(System.in);
 
@@ -15,10 +14,9 @@ public class Main {
         if(clientMode) {
             clientThread.start();
         }
-
+        Thread.sleep(1000);
         Thread serverThread = new Thread(ServerThread.getInstance(clientMode));
         serverThread.start();
-
 
     }
 }
