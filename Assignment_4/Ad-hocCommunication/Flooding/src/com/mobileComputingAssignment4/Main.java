@@ -14,7 +14,7 @@ public class Main {
         if(clientMode) {
             clientThread.start();
         }
-        Thread.sleep(1000);
+        //Thread.sleep(1000);
         Thread serverThread = new Thread(ServerThread.getInstance(clientMode));
         serverThread.start();
 
