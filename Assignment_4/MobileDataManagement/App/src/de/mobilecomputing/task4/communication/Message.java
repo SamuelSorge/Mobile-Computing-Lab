@@ -1,6 +1,7 @@
 package de.mobilecomputing.task4.communication;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Created by SebastianHesse on 06.07.2015.
@@ -12,7 +13,7 @@ public class Message implements Serializable {
     private long time;
     private String sender;
     private String text;
-    private Pair<String, Message> history;
+    private Map<String, Long> history;
 
     private Message() {
         this.time = System.currentTimeMillis();
@@ -26,7 +27,7 @@ public class Message implements Serializable {
         this.history = null;
     }
 
-    public Message(String sender, Pair<String, Message> history, String text) {
+    public Message(String sender, Map<String, Long> history, String text) {
         this();
 
         this.sender = sender;
@@ -46,7 +47,7 @@ public class Message implements Serializable {
         return text;
     }
 
-    public Pair<String, Message> getHistory() {
+    public Map<String, Long> getHistory() {
         return history;
     }
 

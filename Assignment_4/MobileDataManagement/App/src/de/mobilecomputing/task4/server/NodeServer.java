@@ -3,8 +3,6 @@ package de.mobilecomputing.task4.server;
 import de.mobilecomputing.task4.communication.Message;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -73,10 +71,12 @@ public class NodeServer implements INodeServer {
         while (i > 0) {
             if (this.messages.get(i).getTime() > lastMessage.getTime()) {
                 i--;
+            } else {
+                break;
             }
         }
 
-        return this.messages.subList(i, this.messages.size());
+        return new ArrayList<>(this.messages.subList(i+1, this.messages.size()));
     }
 
     @Override

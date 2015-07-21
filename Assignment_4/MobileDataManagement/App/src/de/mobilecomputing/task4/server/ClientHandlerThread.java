@@ -58,7 +58,7 @@ public class ClientHandlerThread extends Thread {
 
             System.out.println("Client disconnected from handler thread...");
         } catch (Exception e) {
-            System.out.println("Error occurred, destroying connection.");
+            System.out.println("Client disconnected.");
             try {
                 this.outputStream.close();
                 this.inputStream.close();

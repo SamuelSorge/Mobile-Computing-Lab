@@ -1,6 +1,5 @@
 package de.mobilecomputing.task4.client;
 
-import de.mobilecomputing.task4.communication.Pair;
 import de.mobilecomputing.task4.communication.Action;
 import de.mobilecomputing.task4.communication.ActionId;
 import de.mobilecomputing.task4.communication.Message;
@@ -26,15 +25,14 @@ public class NodeClient implements INodeClient {
     private ObjectInputStream inputStream;
     private ObjectOutputStream outputStream;
 
-    private List<Message> localMessages;
     private int localMessagePointer = 0;
 
-    private Map<String, List<Message>> downloadedMessages = new HashMap<>();
+    private Map<String, List<Message>> localMessages = new HashMap<>();
 
     public NodeClient(String name, String serverAddress, int serverPort) {
         if (serverAddress != null && !serverAddress.isEmpty() && name != null && !name.isEmpty()) {
             this.name = name;
-            this.localMessages = new ArrayList<>();
+            this.localMessages.put(name, new ArrayList<Message>());
 
             setupServerConnection(serverAddress, serverPort);
         } else {
@@ -61,32 +59,20 @@ public class NodeClient implements INodeClient {
 
     @Override
     public Message writeNewMessage(String text) {
-        Message newMessage = new Message(this.getName(), text);
-        this.localMessages.add(newMessage);
-        return newMessage;
-    }
-
-    @Override
-    public Message writeDependentMessage(String text, Message previousMessage) {
-        Message messageToRespond = null;
-        if (!previousMessage.getSender().equals(this.getName())) {
-            messageToRespond = previousMessage;
-        } else {
-            messageToRespond = this.localMessages.get(this.localMessages.size() - 1);
-        }
-
-        Message newMessage = new Message(this.getName(), new Pair<>(previousMessage.getSender(), messageToRespond), text);
-        this.localMessages.add(newMessage);
+        Message newMessage = new Message(this.getName(), getVersionVector(), text);
+        List<Message> messages = getLocalMessagesAsList();
+        messages.add(newMessage);
         return newMessage;
     }
 
     @Override
     public int saveNewMessagesOnServer() {
         try {
-            final int totalMessages = this.localMessages.size();
+            final List<Message> localMessageList = getLocalMessagesAsList();
+            final int totalMessages = localMessageList.size();
             if (this.localMessagePointer < totalMessages) {
                 System.out.println("Send Action to server");
-                Action action = new Action(ActionId.SAVE, new ArrayList<>(this.localMessages.subList(this.localMessagePointer, totalMessages)));
+                Action action = new Action(ActionId.SAVE, new ArrayList<>(localMessageList.subList(this.localMessagePointer, totalMessages)));
                 this.outputStream.writeObject(action);
                 this.outputStream.flush();
                 this.localMessagePointer = totalMessages;
@@ -102,11 +88,11 @@ public class NodeClient implements INodeClient {
 
     @Override
     public List<Message> getAllLocalMessages() {
-        return this.localMessages;
+        return getLocalMessagesAsList();
     }
 
     @Override
-    public List<Message> getMessagesFromOtherClient(String serverAddress, int serverPort) {
+    public List<Message> getMessagesFromOtherClient(String clientName, String serverAddress, int serverPort) {
         if (serverAddress == null || serverAddress.isEmpty()) {
             throw new RuntimeException("Can't connect to empty server address.");
         }
@@ -117,24 +103,24 @@ public class NodeClient implements INodeClient {
             outputStream.flush();
             ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 
-            result = getMessages(serverAddress, outputStream, inputStream);
+            result = getMessages(clientName, outputStream, inputStream);
 
             inputStream.close();
             outputStream.close();
             socket.close();
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("### ERROR: Connection not possible or interrupted. Please check if client "+clientName+" is available.");
         }
         return result;
     }
 
-    private List<Message> getMessages(String serverAddress, ObjectOutputStream outputStream, ObjectInputStream inputStream) throws IOException, ClassNotFoundException {
+    private List<Message> getMessages(String clientName, ObjectOutputStream outputStream, ObjectInputStream inputStream) throws IOException, ClassNotFoundException {
         List<Message> result;
         Response<List<Message>> response;
         List<Message> alreadyDownloadedMessages;
         Action actionToSend;
 
-        if (this.downloadedMessages.containsKey(serverAddress) && (alreadyDownloadedMessages = this.downloadedMessages.get(serverAddress)).size() > 0) {
+        if (this.localMessages.containsKey(clientName) && (alreadyDownloadedMessages = this.localMessages.get(clientName)).size() > 0) {
             List<Message> lastMessageList = new ArrayList<>();
             lastMessageList.add(alreadyDownloadedMessages.get(alreadyDownloadedMessages.size() - 1));
             actionToSend = new Action(ActionId.GET, lastMessageList);
@@ -148,8 +134,27 @@ public class NodeClient implements INodeClient {
         response = (Response<List<Message>>) inputStream.readObject();
         result = response.getResponseObject();
         alreadyDownloadedMessages.addAll(result);
-        this.downloadedMessages.put(serverAddress, alreadyDownloadedMessages);
+        this.localMessages.put(clientName, alreadyDownloadedMessages);
 
+        return result;
+    }
+
+    @Override
+    public Map<String, List<Message>> getLocalMessages() {
+        return this.localMessages;
+    }
+
+    @Override
+    public Map<String, Long> getVersionVector() {
+        Map<String, Long> result = new HashMap<>(this.localMessages.size());
+        for (String key : this.localMessages.keySet()) {
+            final List<Message> messages = this.localMessages.get(key);
+            if (messages.size() > 0) {
+                result.put(key, messages.get(messages.size()-1).getTime());
+            } else {
+                result.put(key, 0l);
+            }
+        }
         return result;
     }
 
@@ -169,5 +174,9 @@ public class NodeClient implements INodeClient {
         return "NodeClient{" +
                 "name='" + name + '\'' +
                 '}';
+    }
+
+    private List<Message> getLocalMessagesAsList() {
+        return this.localMessages.get(this.name);
     }
 }

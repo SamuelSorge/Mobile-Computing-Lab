@@ -16,7 +16,6 @@ public class MainClient {
     private BufferedReader reader;
     private INodeClient client;
     private Map<String, Pair<String, Integer>> network;
-    private Message lastMessage = null;
 
     public MainClient(INodeClient client) {
         this.client = client;
@@ -86,16 +85,19 @@ public class MainClient {
                     writeNewMessage();
                     break;
                 case 2:
-                    showMessagesFromOtherClient();
-                    break;
-                case 3:
                     saveMessagesOnServer();
                     break;
+                case 3:
+                    showMessagesFromOtherClient();
+                    break;
                 case 4:
-                    printMessageHistory();
+                    printKnownMessages();
                     break;
                 case 5:
-                    System.out.println("### Gewaehlt: (5) Programm beenden");
+                    printLocalMessageHistory();
+                    break;
+                case 6:
+                    System.out.println("### Gewaehlt: (6) Programm beenden");
                     isRunning = false;
                     System.out.println("### EXIT ###");
                     break;
@@ -103,6 +105,7 @@ public class MainClient {
                     System.out.println("### Falsche Eingabe. Bitte erneut versuchen ###");
                     break;
             }
+            System.out.println("###");
         }
 
         this.client.close();
@@ -118,25 +121,32 @@ public class MainClient {
 
         System.out.println("Bitte Message-Text angeben:");
         String text = this.readLineFromConsole();
-        if (lastMessage == null) {
-            lastMessage = this.client.writeNewMessage(text);
-        } else {
-            lastMessage = this.client.writeDependentMessage(text, lastMessage);
-        }
+        Message lastMessage = this.client.writeNewMessage(text);
         System.out.println("Message wurde erstellt: " + lastMessage.toString());
     }
 
+    private void saveMessagesOnServer() {
+        System.out.println("### Gewaehlt: (2) Neue Messages auf Server speichern");
+
+        int savedMessages = this.client.saveNewMessagesOnServer();
+        System.out.println("Messages gespeichert: " + savedMessages);
+    }
+
     private void showMessagesFromOtherClient() {
-        System.out.println("### Gewaehlt: (2) Nachrichten anderer Clients anzeigen");
+        System.out.println("### Gewaehlt: (3) Nachrichten anderer Clients anzeigen");
+
         printAvailableClients();
         System.out.println("Bitte geben Sie den Namen des Clients an: ");
         String clientName = this.readLineFromConsole();
         if (this.network.containsKey(clientName)) {
             System.out.println("Nachrichten von " + clientName);
             Pair<String, Integer> clientsServer = this.network.get(clientName);
-            List<Message> messages = this.client.getMessagesFromOtherClient(clientsServer.getA(), clientsServer.getB());
-            printMessageList(messages);
-            lastMessage = messages.get(messages.size() - 1);
+            List<Message> messages = this.client.getMessagesFromOtherClient(clientName, clientsServer.getA(), clientsServer.getB());
+            if (messages != null) {
+                printMessageList(messages);
+            } else {
+                System.out.println("No messages to display.");
+            }
         } else {
             System.out.println("Client unbekannt.");
         }
@@ -152,17 +162,71 @@ public class MainClient {
         System.out.println();
     }
 
-    private void saveMessagesOnServer() {
-        System.out.println("### Gewaehlt: (3) Messages auf Server speichern");
-        int savedMessages = this.client.saveNewMessagesOnServer();
-        System.out.println("Messages gespeichert: " + savedMessages);
+    private void printKnownMessages() {
+        System.out.println("### Gewaehlt: (4) Alle bekannten Nachrichten ausgeben");
+
+        printMessages(this.client.getLocalMessages());
     }
 
-    private void printMessageHistory() {
-        System.out.println("### Gewaehlt: (4) Message History ausgeben");
+    private void printMessages(Map<String, List<Message>> downloadedMessages) {
+        System.out.println("Downloaded Messages from " + downloadedMessages.size() + " Clients.");
+        List<String> outputData = new ArrayList<>();
+        try {
+            for (List<Message> messages : downloadedMessages.values()) {
+                for (int i = 0; i < messages.size(); i++) {
+                    Message message = messages.get(i);
+                    if (i == 0) {
+                        String firstLine = "Sender: "+message.getSender();
+                        outputData.add(firstLine);
+                    }
+                    String value;
+                    if (outputData.size()-1 < i-1) {
+                        value = outputData.get(i-1);
+                    } else {
+                        value = "";
+                    }
+                    value += String.format("Message %15s, %.20s, %50s", "" + message.getTime(), message.getText(), convertHistoryToString(message.getHistory()));
+                    outputData.add(value);
+                }
+            }
+
+            System.out.println("###");
+            for (String outputLine : outputData) {
+                System.out.println(outputLine);
+            }
+        } catch (IllegalStateException e) {
+            System.out.println("Can't show messages. Reason: "+e.getMessage());
+        }
+    }
+
+    private String convertHistoryToString(Map<String, Long> history) throws IllegalStateException {
+        String result = "{";
+        Map<String, Long> versionVector = this.client.getVersionVector();
+        for (String key : history.keySet()) {
+            final Long dependentMessageTime = history.get(key);
+            if (!versionVector.containsKey(key) || versionVector.containsKey(key) && versionVector.get(key).compareTo(dependentMessageTime) < 0) {
+                throw new IllegalStateException("Client doesn't know message from client " + key + " and time "+dependentMessageTime+". Please re-sync.");
+            }
+            result += key + ":" + dependentMessageTime + ",";
+        }
+        return result + "}";
+    }
+
+    private void printLocalMessageHistory() {
+        System.out.println("### Gewaehlt: (5) Lokale Message History ausgeben");
+
         List<Message> localMessages = this.client.getAllLocalMessages();
         printMessageList(localMessages);
-        System.out.println();
+    }
+
+    private void printCommands() {
+        System.out.println("### Befehle:");
+        System.out.println("(1) Neue Message schreiben");
+        System.out.println("(2) Neue Messages auf Server speichern");
+        System.out.println("(3) Nachrichten anderer Clients anzeigen");
+        System.out.println("(4) Alle bekannten Nachrichten ausgeben");
+        System.out.println("(5) Lokale Message History ausgeben");
+        System.out.println("(6) Programm beenden");
     }
 
     private void printMessageList(List<Message> localMessages) {
@@ -170,15 +234,6 @@ public class MainClient {
         for (Message message : localMessages) {
             System.out.println(message.toString());
         }
-    }
-
-    private void printCommands() {
-        System.out.println("### Befehle:");
-        System.out.println("(1) Neue Message schreiben");
-        System.out.println("(2) Nachrichten anderer Clients anzeigen");
-        System.out.println("(3) Messages auf Server speichern");
-        System.out.println("(4) Message History ausgeben");
-        System.out.println("(5) Programm beenden");
     }
 
     private String readLineFromConsole() {
