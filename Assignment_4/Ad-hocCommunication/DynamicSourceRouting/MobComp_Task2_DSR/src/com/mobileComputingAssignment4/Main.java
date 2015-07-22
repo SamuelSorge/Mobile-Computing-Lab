@@ -9,13 +9,37 @@ public class Main {
 
         System.out.print("\n Do you want to execute the Flooding including a client (true or false?) \n");
         clientMode = scanner.nextBoolean();
+        
+        System.out.print("Which Machine? \n 1: 129.69.210.77 \n 2: 129.69.210.78 \n 3: 129.69.210.1 \n" +
+                " 4: 129.69.210.2 \n" +
+                " 5: 129.69.210.3");
+        String input = System.console().readLine();
+
+        String bcastMsg = null;
+		switch (input) {
+            case "1": bcastMsg ="129.69.210.77";
+                break;
+            case "2": bcastMsg ="129.69.210.78";
+                break;
+            case "3": bcastMsg ="129.69.210.1";
+                break;
+            case "4": bcastMsg ="129.69.210.2";
+                break;
+            case "5": bcastMsg ="129.69.210.3";
+                break;
+        }
+       /* sendBuf = bcastMsg.getBytes();
+        System.out.println("Message initialized with: "+ bcastMsg);
+
+        sendPacket = new DatagramPacket(sendBuf, sendBuf.length, InetAddress.getByName("192.168.132.255"), port);
+*/
 
         Thread clientThread = new Thread(ClientThread.getInstance());
         if(clientMode) {
             clientThread.start();
         }
         //Thread.sleep(1000);
-        Thread serverThread = new Thread(ServerThread.getInstance(clientMode));
+        Thread serverThread = new Thread(ServerThread.getInstance(clientMode, bcastMsg));
         serverThread.start();
 
     }

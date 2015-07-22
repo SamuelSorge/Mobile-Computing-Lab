@@ -19,7 +19,7 @@ public class Message {
     private InetAddress destinationNode;
 
 	private List<InetAddress> messageNodeList;
-
+	private int currentPositionInList;
 
 
 	public Message(int sequenceNumber, int hopCount, byte messageData[], InetAddress destinationNode){
@@ -91,4 +91,13 @@ public class Message {
 	public void setMessageNodeList(List<InetAddress> messageNodeList) {
 		this.messageNodeList = messageNodeList;
 	}
+	
+	public int getCurrentPositionInList() {
+		return currentPositionInList;
+	}
+
+	public void setCurrentPositionInList(int currentPositionInList) {
+		this.currentPositionInList = currentPositionInList;
+	}
+
 }
