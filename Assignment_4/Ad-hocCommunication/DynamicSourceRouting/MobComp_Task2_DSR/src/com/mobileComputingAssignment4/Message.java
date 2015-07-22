@@ -12,86 +12,85 @@ import java.util.List;
  */
 public class Message {
 
-    private int sequenceNumber;
-    private int hopCount;
-    private byte[] messageData = new byte[100];
-    private int length;
-    private InetAddress destinationNode;
+	private int sequenceNumber;
+	private int hopCount;
+	private byte[] messageData = new byte[100];
+	private int length;
+	private InetAddress destinationNode;
 
 	private List<InetAddress> messageNodeList;
 	private int currentPositionInList;
 
+	public Message(int sequenceNumber, int hopCount, byte messageData[],
+			InetAddress destinationNode, List<InetAddress> messageNodeList) {
+		this.sequenceNumber = sequenceNumber;
+		this.hopCount = hopCount;
+		this.messageData = messageData;
+		this.destinationNode = destinationNode;
+		this.messageNodeList = messageNodeList;
+		length = 8 + messageData.length;
+	}
 
-	public Message(int sequenceNumber, int hopCount, byte messageData[], InetAddress destinationNode){
-        this.sequenceNumber = sequenceNumber;
-        this.hopCount = hopCount;
-        this.messageData = messageData;
-        this.destinationNode = destinationNode;
-        length = 8+messageData.length;
-    }
+	public Message(byte[] packetData) {
+		ByteBuffer wrapped = ByteBuffer.wrap(packetData); // big-endian by
+															// default
+		// wrapped.order(ByteOrder.LITTLE_ENDIAN);
 
-    public Message(byte[] packetData){
-        ByteBuffer wrapped = ByteBuffer.wrap(packetData); // big-endian by default
-        //wrapped.order(ByteOrder.LITTLE_ENDIAN);
+		sequenceNumber = wrapped.getInt();
+		hopCount = wrapped.getInt();
+		wrapped.get(messageData);
+		length = packetData.length;
+	}
 
-        sequenceNumber = wrapped.getInt();
-        hopCount = wrapped.getInt();
-        wrapped.get(messageData);
-        length = packetData.length;
-    }
+	public int getSequenceNumber() {
+		return sequenceNumber;
+	}
 
-    public int getSequenceNumber() {
-        return sequenceNumber;
-    }
+	public int getHopCount() {
+		return hopCount;
+	}
 
-    public int getHopCount() {
-        return hopCount;
-    }
+	public byte[] getMessageData() {
+		return messageData;
+	}
 
-    public byte[] getMessageData() {
-        return messageData;
-    }
+	public int getLength() {
+		return 8 + messageData.length;
+	}
 
-    public int getLength(){
-        return 8+messageData.length;
-    }
-    
-  
+	public byte[] toByte() {
+		ByteBuffer buffer = ByteBuffer.allocate(length);
 
-    public byte[] toByte() {
-        ByteBuffer buffer = ByteBuffer.allocate(length);
+		// buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-       // buffer.order(ByteOrder.LITTLE_ENDIAN);
+		buffer.putInt(sequenceNumber);
+		buffer.putInt(hopCount);
+		buffer.put(messageData);
+		return buffer.array();
+	}
 
-        buffer.putInt(sequenceNumber);
-        buffer.putInt(hopCount);
-        buffer.put(messageData);
+	// added for DSR
+	public void addNodeToList(InetAddress address) {
 
-        return buffer.array();
-    }
-    
-    //added for DSR
-    public void addNodeToList(InetAddress address){
-    	
-    	messageNodeList.add(address);
-    }
-    
-    public InetAddress getDestinationNode() {
+		messageNodeList.add(address);
+	}
+
+	public InetAddress getDestinationNode() {
 		return destinationNode;
 	}
 
 	public void setDestinationNode(InetAddress destinationNode) {
 		this.destinationNode = destinationNode;
 	}
-	
-    public List<InetAddress> getMessageNodeList() {
+
+	public List<InetAddress> getMessageNodeList() {
 		return messageNodeList;
 	}
 
 	public void setMessageNodeList(List<InetAddress> messageNodeList) {
 		this.messageNodeList = messageNodeList;
 	}
-	
+
 	public int getCurrentPositionInList() {
 		return currentPositionInList;
 	}

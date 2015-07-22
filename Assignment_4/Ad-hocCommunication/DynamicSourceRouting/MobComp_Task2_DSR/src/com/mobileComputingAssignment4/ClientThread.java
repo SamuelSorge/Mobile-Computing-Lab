@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -16,7 +17,7 @@ public class ClientThread implements Runnable {
 	DatagramSocket sock;
 
 	final int teamNumber = 5;
-	final int port = 5000 + 10 * teamNumber +1;
+	final int port = 5000 + 10 * teamNumber;
 
 	// added for DSR
 	private static List<String> nodeAddresses = new ArrayList<>();
@@ -27,8 +28,17 @@ public class ClientThread implements Runnable {
 			sock.setBroadcast(true);
 
 			byte[] sendData = "DISCOVER_NODE_REQUEST".getBytes();
+
+			//Message msg = new Message(1, 0, sendData,
+			//		InetAddress.getByName("192.168.132.255"));
+
+			//List<InetAddress> messageNodeList = null;
+			List<InetAddress> messageNodeList = new LinkedList<InetAddress>();
+			messageNodeList.add(0,InetAddress.getByName("192.168.132.11"));
+			System.out.println("client messageNodeList " + messageNodeList);
+			
 			Message msg = new Message(1, 0, sendData,
-					InetAddress.getByName("192.168.132.255"));
+					InetAddress.getByName("192.168.132.12"),messageNodeList);
 
 			System.out.println(getClass().getName() + " SequenceNumber: "
 					+ msg.getSequenceNumber() + ", HopCount: "
@@ -41,6 +51,7 @@ public class ClientThread implements Runnable {
 					msg.getLength(), InetAddress.getByName("192.168.132.255"),
 					port);
 			sock.send(sendPacket);
+			System.out.println("Destination Node BEFORE sending" + msg.getDestinationNode());
 			System.out.println(getClass().getName()
 					+ "\n Packet sent to: 192.168.132.255");
 
@@ -105,28 +116,7 @@ public class ClientThread implements Runnable {
 					System.out.println(recievedMsg.getMessageNodeList());
 
 				}
-				/*
-				 * sendSock = new DatagramSocket(); sendSock.setBroadcast(true);
-				 * 
-				 * byte[] sendData = "SEND_BACK_ROUTE".getBytes();
-				 * 
-				 * Message msgTest = new Message(1, 1, sendData,
-				 * recievedMsg.getDestinationNode());
-				 * msgTest.addNodeToList(InetAddress.getLocalHost());
-				 * msgTest.setCurrentPositionInList(msgTest
-				 * .getMessageNodeList().size());
-				 * 
-				 * // get node before this node, send msg to that node String
-				 * PrevNode = "" + msgTest.getMessageNodeList().get(
-				 * msgTest.getCurrentPositionInList() - 1);
-				 * 
-				 * DatagramPacket sendPacket = new DatagramPacket(
-				 * msgTest.toByte(), msgTest.getLength(),
-				 * InetAddress.getByName(PrevNode), port);
-				 * sendSock.send(sendPacket);
-				 * System.out.println(getClass().getName() +
-				 * "\n NodeList sent to: " + PrevNode);
-				 */
+	
 
 			} // sock.close();
 		} catch (SocketException e) {
