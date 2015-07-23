@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Dynamic_Source_Routing:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Dynamic_Source_Routing_jar</output-path>
+    <root id="archive" name="Dynamic_Source_Routing.jar">
+      <element id="module-output" name="Dynamic_Source_Routing" />
+    </root>
+  </artifact>
+</component>
