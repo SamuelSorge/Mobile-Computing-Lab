@@ -3,6 +3,7 @@ package com.mobileComputingAssignment4;
 import java.util.Scanner;
 
 public class Main {
+	
     public static void main(String[] args) throws InterruptedException {
         Boolean clientMode = false;
         Scanner scanner = new Scanner(System.in);
@@ -17,7 +18,8 @@ public class Main {
 
         String bcastMsg = null;
 		switch (input) {
-            case "1": bcastMsg ="129.69.210.77";
+            //case "1": bcastMsg ="129.69.210.77";
+			case "1": bcastMsg ="192.168.132.11";
                 break;
             case "2": bcastMsg ="129.69.210.78";
                 break;
