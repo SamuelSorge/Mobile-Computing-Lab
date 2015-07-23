@@ -59,6 +59,14 @@ public class ServerThread implements Runnable {
                     if (!clientModeOn && seqNr != seqNrTemp) {
                         System.out.println(getClass().getName() + msg.getTarget());
                         if (msg.getTarget().equals(InetAddress.getByName(address))) {
+
+                            byte[] reply = "DISCOVER_NODE_RESPONS".getBytes();
+                            Message msgTest = new Message(1, msg.getHopCount(), reply, msg.getNodes());
+                            sendSock = new DatagramSocket();
+                            sendSock.setBroadcast(true);
+
+                            DatagramPacket sendPacket = new DatagramPacket(msgTest.toByte(), msgTest.getLength(), InetAddress.getByName("192.168.132.255"), port);
+                            sendSock.send(sendPacket);
                             System.out.println(getClass().getName() + "I am the destination");
 
                         } else {
@@ -67,6 +75,8 @@ public class ServerThread implements Runnable {
                             sendSock.setBroadcast(true);
                             nodeAddresses.add(msg.getSource());
                             nodeAddresses.add(msg.getTarget());
+                            // add myself
+                            nodeAddresses.add(InetAddress.getByName(address));
 
                             byte[] sendData = "DISCOVER_NODE_REQUEST".getBytes();
                             Message msgTest = new Message(1, msg.getHopCount()+1, sendData, nodeAddresses);
@@ -83,6 +93,19 @@ public class ServerThread implements Runnable {
                     } else {
                         System.out.println(getClass().getName() + "Message already received");
                     }
+                }
+                else if(message.equals("DISCOVER_NODE_RESPONS"))
+                {
+                    byte[] reply = "DISCOVER_NODE_RESPONS".getBytes();
+                    Message msgTest = new Message(1, msg.getHopCount()-1, reply, msg.getNodes());
+                    sendSock = new DatagramSocket();
+                    sendSock.setBroadcast(true);
+
+                    // TODO: Auf Reihenfolge achten: nodes[0] = source, nodes[1] = target, node[i]=hops
+
+//                    DatagramPacket sendPacket = new DatagramPacket(msgTest.toByte(), msg.getLength(), msgTest.getNodes().get(msgTest.getHopCount()));
+//                    sendSock.send(sendPacket);
+//                    System.out.println(getClass().getName() + "I am the destination");
                 }
             }
         } catch (SocketException e) {
