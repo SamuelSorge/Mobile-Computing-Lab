@@ -46,7 +46,7 @@ public class ServerThread implements Runnable {
                 sock.receive(packet);
 
                 Message msg = new Message(packet.getData());
-                System.out.println(getClass().getName() + " \n Message!" + new String(packet.getData()));
+                //System.out.println(getClass().getName() + " \n Message!" + new String(packet.getData()));
                 seqNr = msg.getSequenceNumber();
 
                 String message = new String(msg.getMessageData()).trim();
@@ -55,21 +55,40 @@ public class ServerThread implements Runnable {
 //                        "Source: " + packet.getAddress().getHostAddress());
 
                 if (message.equals("DISCOVER_NODE_REQUEST")) {
-                    System.out.println(getClass().getName() + "Message equal");
+                   // System.out.println(getClass().getName() + "Message equal");
                     if (!clientModeOn && seqNr != seqNrTemp) {
-                        System.out.println(getClass().getName() + msg.getTarget());
+                        //System.out.println(getClass().getName() + msg.getTarget());
+                        System.out.println(getClass().getName() + "I am not the client\n");
                         if (msg.getTarget().equals(InetAddress.getByName(address))) {
-
+                            System.out.println(getClass().getName() + "I am the destination \n");
                             byte[] reply = "DISCOVER_NODE_RESPONS".getBytes();
-                            Message msgTest = new Message(1, msg.getHopCount(), reply, msg.getNodes());
+                            nodeAddresses.clear();
+                            nodeAddresses.add(InetAddress.getByName(msg.getNodes().get(0).getHostAddress()));
+                            nodeAddresses.add(InetAddress.getByName(msg.getNodes().get(1).getHostAddress()));
+                          //  System.out.println(getClass().getName() + "I got: " + nodeAddresses.get(0));
+                         //   System.out.println(getClass().getName() + "I got: " + nodeAddresses.get(1));
+
+                            Message msgTest = new Message(1, msg.getHopCount(), reply, nodeAddresses);
                             sendSock = new DatagramSocket();
                             sendSock.setBroadcast(true);
 
-                            DatagramPacket sendPacket = new DatagramPacket(msgTest.toByte(), msgTest.getLength(), InetAddress.getByName("192.168.132.255"), port);
-                            sendSock.send(sendPacket);
-                            System.out.println(getClass().getName() + "I am the destination");
+                            if(msg.getHopCount() !=0) {
+                                System.out.println(getClass().getName() + "There was a hop between \n");
+                                DatagramPacket sendPacket = new DatagramPacket(msgTest.toByte(), msgTest.getLength(), InetAddress.getByName("192.168.132.255"), port);
+                                sendSock.send(sendPacket);
+
+                            }
+                            else
+                            {
+                                System.out.println(getClass().getName() + "This Discovery came directly to me \n");
+                                DatagramPacket sendPacket = new DatagramPacket(msgTest.toByte(), msgTest.getLength(), packet.getAddress(), packet.getPort());
+                                sendSock.send(sendPacket);
+                            }
+
+
 
                         } else {
+                            System.out.println(getClass().getName() + "I am not the destination \n");
 
                             sendSock = new DatagramSocket();
                             sendSock.setBroadcast(true);
@@ -80,13 +99,13 @@ public class ServerThread implements Runnable {
 
                             byte[] sendData = "DISCOVER_NODE_REQUEST".getBytes();
                             Message msgTest = new Message(1, msg.getHopCount()+1, sendData, nodeAddresses);
-                            System.out.println(getClass().getName() + " SequenceNumber: " + msgTest.getSequenceNumber() +
-                                    ", HopCount: " + msgTest.getHopCount() + (", messageData: " + new String(msgTest.getMessageData())));
+                            //System.out.println(getClass().getName() + " SequenceNumber: " + msgTest.getSequenceNumber() +
+                              //      ", HopCount: " + msgTest.getHopCount() + (", messageData: " + new String(msgTest.getMessageData())));
 
                             //DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("192.168.132.255"), port);
                             DatagramPacket sendPacket = new DatagramPacket(msgTest.toByte(), msgTest.getLength(), InetAddress.getByName("192.168.132.255"), port);
                             sendSock.send(sendPacket);
-                            System.out.println(getClass().getName() + "\n Packet sent to: 192.168.132.255");
+                            System.out.println(getClass().getName() + "\n Forwarded Packet sent to: 192.168.132.255");
                         }
 
                         seqNrTemp = seqNr;
@@ -94,12 +113,50 @@ public class ServerThread implements Runnable {
                         System.out.println(getClass().getName() + "Message already received");
                     }
                 }
-                else if(message.equals("DISCOVER_NODE_RESPONS"))
+                else if(message.equals("DISCOVER_NODE_RESPONS"))// E missing because of hard coded length 21
                 {
                     byte[] reply = "DISCOVER_NODE_RESPONS".getBytes();
-                    Message msgTest = new Message(1, msg.getHopCount()-1, reply, msg.getNodes());
                     sendSock = new DatagramSocket();
                     sendSock.setBroadcast(true);
+                    if(msg.getSource().equals(address))//Hint: this path is useless -> see client
+                    {
+                        System.out.println(getClass().getName() + "Reply reached me, I am source");
+                        System.out.println(getClass().getName() + "Route: ");
+
+                        if(msg.getHopCount() == 0)
+                        {
+                            System.out.println(getClass().getName() + msg.getNodes().get(1) + "->" + msg.getNodes().get(0));
+                        }
+                        else
+                        {
+                            int hop = msg.getHopCount();
+                            while(hop > 0)
+                        {
+                            System.out.println(getClass().getName()  + msg.getNodes().get(hop+1) + "->");
+                            hop--;
+
+                        }
+                            System.out.println(getClass().getName() + msg.getNodes().get(1) + "->" + msg.getNodes().get(0));
+
+                        }}
+                    else if(msg.getHopCount() != 0)
+                    {
+                        System.out.println(getClass().getName() + "Reply Forwarded");
+                        Message msgTest = new Message(1, msg.getHopCount()-1, reply, msg.getNodes());
+                        int hop = msg.getHopCount();
+                        hop++;
+                        String dest = new String(msg.getNodes().get(hop).getHostAddress());
+
+                        DatagramPacket sendPacket = new DatagramPacket(msgTest.toByte(), msgTest.getLength(), InetAddress.getByName(dest), port);
+                        sendSock.send(sendPacket);
+                    }//TODO in message equal requets noch direkt zurück an source
+                   // else
+                    //{
+                     //   System.out.println(getClass().getName() + "Direct from destination reply");
+                    //  Message msgTest = new Message(1, msg.getHopCount(), reply, msg.getNodes());
+                   // }
+
+
 
                     // TODO: Auf Reihenfolge achten: nodes[0] = source, nodes[1] = target, node[i]=hops
 
