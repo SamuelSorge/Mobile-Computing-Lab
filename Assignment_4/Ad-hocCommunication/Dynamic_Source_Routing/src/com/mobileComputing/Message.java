@@ -17,40 +17,18 @@ public class Message {
     private int length;
     private static List<InetAddress> nodeAddresses = new ArrayList<InetAddress>();
 
-    public Message(int sequenceNumber, int hopCount, byte messageData[],List<InetAddress> nodes){
+    public Message(int sequenceNumber, int hopCount, byte messageData[], List<InetAddress> nodes) {
         this.sequenceNumber = sequenceNumber;
         this.hopCount = hopCount;
         this.messageData = messageData;
-        for(int i=0; i < nodes.size(); i++) {
+        for (int i = 0; i < nodes.size(); i++) {
             this.nodeAddresses.add(i, nodes.get(i));
         }
-       // System.out.println(getClass().getName() + "\n Message: " + new String(messageData));
-       // System.out.println(getClass().getName() + "\n Message: " + nodeAddresses.get(0));
-       // System.out.println(getClass().getName() + "\n Message: " + nodeAddresses.get(1));
-
-        length = 8+messageData.length+(nodeAddresses.size()*4);
+        length = 8 + messageData.length + (nodeAddresses.size() * 4);
     }
 
     public Message(byte[] packetData) throws UnknownHostException {
-  /*      ByteBuffer wrapped = ByteBuffer.wrap(packetData); // big-endian by default
-        byte[] temp = new byte[1];
-        wrapped.get(temp, 0, 1);
-        System.out.println(getClass().getName() + "\n Message byte: " + new String(temp));
-
-        byte[] temp2 = new byte[2];
-        wrapped.get(temp2, 0, 2);
-
-       wrapped.get(messageData, 0, messageData.length+2 );
-
-
-        hopCount = wrapped.getInt();
-        System.out.println(getClass().getName() + "\n Message byte: " + new String(temp2));
-        wrapped.get(messageData, 16, 29);
-        System.out.println(getClass().getName() + "\n Message byte: " + new String(messageData));
-
-        length = packetData.length;*/
         ByteBuffer wrapped = ByteBuffer.wrap(packetData); // big-endian by default
-       // messageData = "DISCOVER_NODE_REQUEST".getBytes();
         sequenceNumber = 1;
         hopCount = 0;
         byte[] test = new byte[400];
@@ -60,38 +38,50 @@ public class Message {
         byte[] test5 = new byte[400];
         byte[] test6 = new byte[400];
 
-        System.out.println(getClass().getName() + "\n pos: " + wrapped.position());
-        wrapped.get(test, 0,1);
-        System.out.println(getClass().getName() + "\n Message byte: " + sequenceNumber);
-        System.out.println(getClass().getName() + "\n pos: " + wrapped.position());
+        wrapped.get(test, 0, 1);
+        sequenceNumber = Integer.parseInt(new String(test).trim());
+        System.out.println(getClass().getName() + "\n seqnr: " + sequenceNumber);
 
-        wrapped.get(test2,1,1);
-        System.out.println(getClass().getName() + "\n Message byte: " + new String(test2));
-        System.out.println(getClass().getName() + "\n pos: " + wrapped.position());
+        wrapped.get(test2, 1, 1);
+        String hopcnter = new String(test2);
+        hopCount = Integer.parseInt(hopcnter.trim());
+        System.out.println(getClass().getName() + "\n hopcount: " + hopCount);
 
-        wrapped.get(messageData,2,21);
-        System.out.println(getClass().getName() + "\n Message byte: " + new String(test3));
-        System.out.println(getClass().getName() + "\n pos: " + wrapped.position());
+        wrapped.get(messageData, 2, 21);
+        System.out.println(getClass().getName() + "\n Message byte: " + new String(messageData));
 
-        wrapped.get(test4,24,14);
+        wrapped.get(test3, 24, (2 + hopCount) * 3);
+        final String lengthsAsString = new String(test3).trim();
+        System.out.println(getClass().getName() + "\n length as string: " + lengthsAsString);
+
+        String[] lengths = lengthsAsString.split(",");
+        int totalLength = 0;
+        for (String length : lengths) {
+            if (!"".equals(length)) {
+                totalLength += Integer.valueOf(length.trim());
+            }
+        }
+
+        System.out.println(getClass().getName() + "\n Total Length: "+totalLength);
+
+        wrapped.get(test4, 24, 29 + totalLength);
         System.out.println(getClass().getName() + "\n Message byte: " + new String(test4));
-        System.out.println(getClass().getName() + "\n pos: " + wrapped.position());
-
-        wrapped.get(test5,29,15);
-        System.out.println(getClass().getName() + "\n Message byte: " + new String(test5));
-        System.out.println(getClass().getName() + "\n pos: " + wrapped.position());
 
         String s = new String(test4);
-        String t = new String(test5);
         String[] neu = s.split("/");
-        String[] neu2 = t.split("/");
+
+        for (String ip : neu) {
+            System.out.println("Neu: " + ip);
+        }
+
+        System.out.println("###");
 
         nodeAddresses.clear();
-        nodeAddresses.add(0, InetAddress.getByName(neu[1]));
-        nodeAddresses.add(1,InetAddress.getByName(neu2[1]));
+        nodeAddresses.add(InetAddress.getByName(neu[1]));
+        nodeAddresses.add(InetAddress.getByName(neu[2]));
 
-        System.out.println(getClass().getName() + "\n Source: " + nodeAddresses.get(0));
-        System.out.println(getClass().getName() + "\n Source: " + nodeAddresses.get(1));
+        System.out.println(getClass().getName() + "\n Source: " + nodeAddresses.get(0).getHostAddress());
+        System.out.println(getClass().getName() + "\n Source: " + nodeAddresses.get(1).getHostAddress());
 
     }
 
@@ -107,8 +97,7 @@ public class Message {
         return messageData;
     }
 
-    public int getLength(){
-       // return 8+messageData.length+(nodeAddresses.size()*4);
+    public int getLength() {
         return length;
     }
 
@@ -119,19 +108,19 @@ public class Message {
 
         ByteBuffer buffer = ByteBuffer.allocate(400);
 
-        //buffer.putInt(sequenceNumber);
         buffer.put(seq);
-        //System.out.println(getClass().getName() + "\n toByte Message: " + new String(buffer.array()));
-        //buffer.putInt(hopCount);
         buffer.put(hop);
-        //System.out.println(getClass().getName() + "\n toByte Message: " + new String(buffer.array()));
         buffer.put(messageData);
-        //System.out.println(getClass().getName() + "\n toByte Message: " + new String(buffer.array()));
 
-        for(int i=0; i < nodeAddresses.size(); i++) {
+        byte[][] bigTemp = new byte[nodeAddresses.size()][];
+        for (int i = 0; i < nodeAddresses.size(); i++) {
             byte[] temp = String.valueOf(nodeAddresses.get(i)).getBytes();
+            buffer.put(String.valueOf(temp.length).getBytes());
+            buffer.put(",".getBytes());
+            bigTemp[i] = temp;
+        }
+        for (byte[] temp : bigTemp) {
             buffer.put(temp);
-            //System.out.println(getClass().getName() + "\n toByte Message: " + new String(buffer.array()));
         }
 
         length = buffer.array().length;
@@ -139,8 +128,16 @@ public class Message {
         return buffer.array();
     }
 
-    public InetAddress getTarget(){return nodeAddresses.get(1);}
-    public InetAddress getSource(){return nodeAddresses.get(0);}
-    public List<InetAddress> getNodes(){return nodeAddresses;}
+    public InetAddress getTarget() {
+        return nodeAddresses.get(1);
+    }
+
+    public InetAddress getSource() {
+        return nodeAddresses.get(0);
+    }
+
+    public List<InetAddress> getNodes() {
+        return nodeAddresses;
+    }
 
 }

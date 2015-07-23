@@ -32,6 +32,7 @@ public class ServerThread implements Runnable {
     private static int seqNrTemp = 0;
     private static List<InetAddress> nodeAddresses = new ArrayList<InetAddress>();
     private static String address;
+
     public void run() {
         try {
             sock = new DatagramSocket(port);
@@ -40,7 +41,7 @@ public class ServerThread implements Runnable {
             byte[] bcastMsg = new byte[500];
             DatagramPacket packet = new DatagramPacket(bcastMsg, bcastMsg.length);
 
-            while(true) {
+            while (true) {
                 System.out.println(getClass().getName() + " Receiving broadcast messages!");
                 sock.receive(packet);
 
@@ -49,19 +50,18 @@ public class ServerThread implements Runnable {
                 seqNr = msg.getSequenceNumber();
 
                 String message = new String(msg.getMessageData()).trim();
-                System.out.println(getClass().getName() + " SequenceNumber: " + msg.getSequenceNumber() + ", HopCount: " + msg.getHopCount() + (", messageData: " + new String(msg.getMessageData())) + "Source: " + packet.getAddress().getHostAddress());
+//                System.out.println(getClass().getName() + " SequenceNumber: " + msg.getSequenceNumber() +
+//                        ", HopCount: " + msg.getHopCount() + (", messageData: " + new String(msg.getMessageData())) +
+//                        "Source: " + packet.getAddress().getHostAddress());
 
                 if (message.equals("DISCOVER_NODE_REQUEST")) {
                     System.out.println(getClass().getName() + "Message equal");
-                    if (!clientModeOn && seqNr != seqNrTemp)
-                    {
+                    if (!clientModeOn && seqNr != seqNrTemp) {
                         System.out.println(getClass().getName() + msg.getTarget());
-                        if(msg.getTarget().equals(InetAddress.getByName(address)))
-                        {
+                        if (msg.getTarget().equals(InetAddress.getByName(address))) {
                             System.out.println(getClass().getName() + "I am the destination");
 
-                        }
-                        else {
+                        } else {
 
                             sendSock = new DatagramSocket();
                             sendSock.setBroadcast(true);
@@ -69,8 +69,9 @@ public class ServerThread implements Runnable {
                             nodeAddresses.add(msg.getTarget());
 
                             byte[] sendData = "DISCOVER_NODE_REQUEST".getBytes();
-                            Message msgTest = new Message(1, 1, sendData, nodeAddresses);
-                            System.out.println(getClass().getName() + " SequenceNumber: " + msgTest.getSequenceNumber() + ", HopCount: " + msgTest.getHopCount() + (", messageData: " + new String(msgTest.getMessageData())));
+                            Message msgTest = new Message(1, msg.getHopCount()+1, sendData, nodeAddresses);
+                            System.out.println(getClass().getName() + " SequenceNumber: " + msgTest.getSequenceNumber() +
+                                    ", HopCount: " + msgTest.getHopCount() + (", messageData: " + new String(msgTest.getMessageData())));
 
                             //DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("192.168.132.255"), port);
                             DatagramPacket sendPacket = new DatagramPacket(msgTest.toByte(), msgTest.getLength(), InetAddress.getByName("192.168.132.255"), port);
@@ -79,13 +80,11 @@ public class ServerThread implements Runnable {
                         }
 
                         seqNrTemp = seqNr;
-                    }
-                    else
-                    {
+                    } else {
                         System.out.println(getClass().getName() + "Message already received");
                     }
-                                    }
-                            }
+                }
+            }
         } catch (SocketException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -99,7 +98,7 @@ public class ServerThread implements Runnable {
     public static ServerThread getInstance(boolean clientMode, String adr) {
 
         clientModeOn = clientMode;
-        address=adr;
+        address = adr;
         return ServerThreadHolder.INSTANCE;
     }
 
