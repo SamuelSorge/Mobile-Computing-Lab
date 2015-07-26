@@ -35,7 +35,7 @@ public class Main {
         if(clientMode) {
             System.out.print("Select Destination! \n 1: 129.69.210.77 \n 2: 129.69.210.78 \n 3: 129.69.210.1 \n" +
                     " 4: 129.69.210.2 \n" +
-                    " 5: 129.69.210.3");
+                    " 5: 129.69.210.3\n");
             input = System.console().readLine();
 
             switch (input) {
